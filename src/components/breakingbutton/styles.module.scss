@@ -1,0 +1,147 @@
+.container {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  vertical-align: baseline;
+  flex-shrink: 0;
+  pointer-events: auto;
+  height: 150px;
+  overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 360px;
+}
+
+.container .button {
+  position: absolute;
+  height: 98px;
+  width: 240px;
+  left: 60px;
+  top: 26px;
+}
+
+.container .button_broken {
+  position: absolute;
+  height: 98px;
+  width: 240px;
+  left: 60px;
+  top: 26px;
+}
+
+.container .break_left_07 {
+  position: absolute;
+  height: 13px;
+  width: 34px;
+  left: 60px;
+  top: 70px;
+}
+
+.container .break_left_06 {
+  position: absolute;
+  height: 12px;
+  width: 18px;
+  left: 61px;
+  top: 79px;
+}
+
+.container .break_left_05 {
+  position: absolute;
+  height: 17px;
+  width: 21px;
+  left: 61px;
+  top: 49px;
+}
+
+.container .break_left_04 {
+  position: absolute;
+  height: 8px;
+  width: 15px;
+  left: 66px;
+  top: 53px;
+}
+
+.container .break_left_03 {
+  position: absolute;
+  height: 5px;
+  width: 11px;
+  left: 60px;
+  top: 91px;
+}
+
+.container .break_left_02 {
+  position: absolute;
+  height: 14px;
+  width: 9px;
+  left: 60px;
+  top: 79px;
+}
+
+.container .break_left_01 {
+  position: absolute;
+  height: 16px;
+  width: 34px;
+  left: 60px;
+  top: 56px;
+}
+
+.container .break_right_07 {
+  position: absolute;
+  height: 13px;
+  width: 34px;
+  left: 265px;
+  top: 62px;
+}
+
+.container .break_right_06 {
+  position: absolute;
+  height: 12px;
+  width: 18px;
+  left: 281px;
+  top: 53px;
+}
+
+.container .break_right_05 {
+  position: absolute;
+  height: 17px;
+  width: 21px;
+  left: 279px;
+  top: 78px;
+}
+
+.container .break_right_04 {
+  position: absolute;
+  height: 7px;
+  width: 14px;
+  left: 280px;
+  top: 84px;
+}
+
+.container .break_right_03 {
+  position: absolute;
+  height: 5px;
+  width: 11px;
+  left: 289px;
+  top: 48px;
+}
+
+.container .break_right_02 {
+  position: absolute;
+  height: 14px;
+  width: 9px;
+  left: 290px;
+  top: 53px;
+}
+
+.container .break_right_01 {
+  position: absolute;
+  height: 16px;
+  left: 266px;
+  width: 34px;
+  top: 73px;
+}
+

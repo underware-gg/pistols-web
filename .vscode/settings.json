@@ -1,0 +1,34 @@
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.github": true,
+    "**/.next": true,
+    "**/build": true,
+    "**/_bak": true,
+    "**/*.tsbuildinfo": true,
+    // "**/.vscode": true,
+    // "**/.env*": true,
+  },
+  "search.exclude": {
+    "**/*-lock.json": true,
+    "**/*.lock": true,
+    "**/artifacts/**/*.json": true,
+    "**/contracts/**/*.json": true,
+    "**/yarn*.json": true,
+    "**/dist": true,
+    "**/.gitignore": true,
+    "**/.gitmodules": true,
+    "**/database.json": true,
+    "**/generated/*": true,
+    "**/manifest.json": true,
+    "/client/public/**": true,
+  },
+  "typescript.validate.enable": true,
+  "editor.detectIndentation": false,
+  "editor.formatOnPaste": true,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "[css][scss]": {
+    "editor.formatOnPaste": false
+  },
+}
