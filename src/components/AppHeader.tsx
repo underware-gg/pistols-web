@@ -1,9 +1,13 @@
 import React from 'react'
 import Head from 'next/head'
 
+interface AppHeaderProps {
+  title?: string | null;
+}
+
 export default function AppHeader({
   title = null,
-}) {
+}: AppHeaderProps) {
 	const domain = process.env.SERVER_URL;
 
 	let desc = 'On chain dueling game!';
@@ -17,7 +21,7 @@ export default function AppHeader({
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 			<meta key='social_url' property='og:url' content={'https://underware.gg/'} />
-			<meta key='social_title' property='og:title' content={title} />
+			<meta key='social_title' property='og:title' content={title ?? 'Pistols at 10 blocks'} />
 			<meta key='social_desc' property='og:description' content={desc} />
 			<meta key='social_image' property='og:image' content={imageUrl} />
 			<meta key='social_image_type' property='og:image:type' content={'image/png'} />

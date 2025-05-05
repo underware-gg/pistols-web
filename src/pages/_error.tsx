@@ -1,20 +1,25 @@
 import React from 'react'
 import Link from 'next/link'
 import { Grid } from 'semantic-ui-react'
+import { NextPageContext } from 'next/types'
 
 //
 // Generic error page
 // https://nextjs.org/docs/advanced-features/custom-error-page
 //
 
-ErrorPage.getInitialProps = ({ res, err }) => {
+interface ErrorProps {
+  statusCode?: number;
+}
+
+ErrorPage.getInitialProps = ({ res, err }: NextPageContext): ErrorProps => {
   const statusCode = res ? res.statusCode : err ? err.statusCode : 404
   return { statusCode }
 }
 
-function ErrorPage({ statusCode }) {
+function ErrorPage({ statusCode }: ErrorProps) {
   const errorMessage =
-    parseInt(statusCode) == 404 ? `404: Page not found`
+    parseInt(String(statusCode)) == 404 ? `404: Page not found`
       : statusCode ? <div>A <b>{statusCode}</b> server error occurred</div>
         : <div>A client error occurred</div>;
   return (

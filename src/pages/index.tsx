@@ -475,6 +475,7 @@ export default function Home() {
           <div style={{ width: '100vw', height: backgroundHeight, overflow: 'hidden', position: 'relative', backgroundColor: '#0347AD' }}>
             <img 
               src='/images/bg_extension_2.png' 
+              alt="Background extension"
               style={{ 
                 width: '100vw', 
                 height: '100%',
@@ -497,6 +498,7 @@ export default function Home() {
             <m.img 
               ref={duelistRef}
               src={femaleDuelistSrc}
+              alt="Female duelist"
               initial={{ x: 0 }}
               style={{ 
                 willChange : 'contents',
@@ -519,6 +521,7 @@ export default function Home() {
           >
             <m.img 
               src={maleDuelistSrc}
+              alt="Male duelist"
               initial={{ x: 0 }}
               style={{ 
                 willChange : 'contents',
@@ -653,7 +656,7 @@ export default function Home() {
                   touchAction: 'auto'
                 }}
                 whileHover={{ scale: 1.1 }}
-                onClick={() => window.location.href='https://pistols.lootunder.world/'}
+                onClick={() => window.location.href="https://pistols.lootunder.world/"}
                 onMouseEnter={() => setTooltipText("Click to Play Pistols at Dawn")}
                 onMouseLeave={() => setTooltipText(null)}
               />
@@ -726,14 +729,14 @@ export default function Home() {
               <br />
               Challenge a friend or a foe in an atmospheric, onchain duel where every choice, bluff, and bullet is forever etched in the blockchain.
               <br />
-              Pick your cards. Choose your moment. Fire… or don't.
+              Pick your cards. Choose your moment. Fire… or don&apos;t.
               <br />
               Each duel tells a story — make yours legendary.
             </div>
           </m.div>
           
           <m.div className="HeaderLayer DisplayFlex Centered" style={{ zIndex: 2, scale: buttonScale, top: playButtonY }}>
-            <BreakingButton title="Play Game" onClick={() => window.location.href='https://pistols.lootunder.world/'} style={{  }}/>
+            <BreakingButton title="Play Game" onClick={() => window.location.href="https://pistols.lootunder.world/"} style={{  }}/>
           </m.div>
           <m.div className="HeaderLayer" style={{ y: clouds2Y, zIndex: 1, opacity: clouds2Opacity, overflowX: 'clip' }}>
             {clouds2}
@@ -767,7 +770,7 @@ export default function Home() {
                 </p>
                 
                 <p style={{ fontSize: 'min(1.8vh, 4.4vmin)', color: '#F4D8A0', lineHeight: '1.6', marginBottom: '2rem' }}>
-                  Every duel is recorded on the blockchain, creating a permanent record of your character's journey through a world where reputation is everything and honor must be defended at all costs.
+                  Every duel is recorded on the blockchain, creating a permanent record of your character&apos;s journey through a world where reputation is everything and honor must be defended at all costs.
                 </p>
                 
                 <div style={{ width: isNarrow ? '90%' : '60%', margin: '0 auto', marginBottom: '4rem' }}>
@@ -782,7 +785,7 @@ export default function Home() {
 
                 <h4 style={{ fontSize: 'min(2.6vh, 5vmin)', color: '#F4D8A0', marginBottom: '2rem', textAlign: 'center' }}>OUR PHILOSOPHY</h4>
                 <p style={{ fontSize: 'min(1.8vh, 4.4vmin)', color: '#F4D8A0', textAlign: 'center', lineHeight: '1.6', marginBottom: '1.5rem' }}>
-                  Pistols at Dawn represents a fusion of classic gaming principles with blockchain innovation. We're building a world where your skills, decisions, and reputation create a lasting legacy on the chain.
+                  Pistols at Dawn represents a fusion of classic gaming principles with blockchain innovation. We&apos;re building a world where your skills, decisions, and reputation create a lasting legacy on the chain.
                 </p>
                 <div className="ui divider" style={{ borderTop: '1px solid rgba(138, 110, 75, 0.5)', margin: '1.5rem 0' }}></div>
                 <p style={{ fontSize: 'min(1.8vh, 4.4vmin)', color: '#F4D8A0', textAlign: 'center', lineHeight: '1.6', marginBottom: '1.5rem' }}>
@@ -884,7 +887,7 @@ export default function Home() {
               <div className="column" style={{ paddingRight: '2rem', paddingLeft: '2rem', display: 'flex', justifyContent: 'center' }}>
                 <div 
                   className="social-card"
-                  onMouseEnter={() => setTooltipText("The barkeep's blueprints. Code, scrolls, and schematics from the boldest patrons.<br />If you're building, fixing, or breaking… start here.")}
+                  onMouseEnter={() => setTooltipText("The barkeep&apos;s blueprints. Code, scrolls, and schematics from the boldest patrons.<br />If you&apos;re building, fixing, or breaking… start here.")}
                   onMouseLeave={() => setTooltipText(null)}
                 >
                   <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
@@ -938,7 +941,7 @@ export default function Home() {
               <div className="column" style={{ paddingRight: '2rem', paddingLeft: '2rem', display: 'flex', justifyContent: 'center' }}>
                 <div 
                   className="social-card" 
-                  onMouseEnter={() => setTooltipText("Duels, drama, and death threats—pinned for all to see.<br />If it's loud, it ends up here.")}
+                  onMouseEnter={() => setTooltipText("Duels, drama, and death threats—pinned for all to see.<br />If it&apos;s loud, it ends up here.")}
                   onMouseLeave={() => setTooltipText(null)}
                 >
                   <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
@@ -1028,7 +1031,7 @@ export default function Home() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    10 Steps. 2 Bullets. Don't Flinch.
+                    10 Steps. 2 Bullets. Don&apos;t Flinch.
                   </h3>
                   
                   <p style={{ 

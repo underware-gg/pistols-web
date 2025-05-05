@@ -745,4 +745,6 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
   return props.isHanging ? hangingNail : component
 })
 
+InteractibleComponent.displayName = 'InteractibleComponent'
+
 

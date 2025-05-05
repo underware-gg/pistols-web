@@ -20,7 +20,12 @@
     "sass": "^1.69.5",
     "semantic-ui-css": "^2.5.0",
     "semantic-ui-react": "^3.0.0-beta.2",
-    "use-sound": "^5.0.0"
+    "use-sound": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16"
   },
   "devDependencies": {
     "@types/node": "^20",

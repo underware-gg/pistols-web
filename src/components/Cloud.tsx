@@ -172,6 +172,7 @@ const Cloud = ({
     >
       <Image 
         src={src}
+        alt="Cloud"
         style={{ 
           width: '100%', 
           height: 'auto',

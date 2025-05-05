@@ -181,6 +181,7 @@ export default function SelectDuelistModal() {
         ref={bottomCardRef}
         className='HandCard NoMouse NoDrag' 
         src='/images/hand_card_multiple_bottom.png'
+        alt="Card hand bottom"
         style={{
           width: aspectWidth(HAND_CARD_WIDTH),
           height: aspectWidth(HAND_CARD_HEIGHT)
@@ -195,6 +196,7 @@ export default function SelectDuelistModal() {
         ref={topCardRef}
         className='HandCard NoMouse NoDrag' 
         src='/images/hand_card_multiple_top.png'
+        alt="Card hand top"
         style={{
           width: aspectWidth(HAND_CARD_WIDTH),
           height: aspectWidth(HAND_CARD_HEIGHT),

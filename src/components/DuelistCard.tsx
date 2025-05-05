@@ -97,7 +97,7 @@ export const DuelistCard = forwardRef<DuelistCardHandle, DuelistCardProps>((prop
       ref={baseRef}
       childrenBehindFront={
         <>
-          <Image ref={imageRef} src={props.imageUrl} className='ProfilePic NoDrag duelist-card-image-drawing' />
+          <Image ref={imageRef} src={props.imageUrl} alt={`${props.name} duelist portrait`} className='ProfilePic NoDrag duelist-card-image-drawing' />
         </>
       }
       childrenInFront={
@@ -169,3 +169,5 @@ export const DuelistCard = forwardRef<DuelistCardHandle, DuelistCardProps>((prop
     />
   )
 })
+
+DuelistCard.displayName = 'DuelistCard';

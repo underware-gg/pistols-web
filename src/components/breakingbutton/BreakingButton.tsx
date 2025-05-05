@@ -1,20 +1,27 @@
-import React, { forwardRef, useEffect, useImperativeHandle } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import styles from "./styles.module.scss";
 import { motion, useAnimation } from "framer-motion";
 
-export const BreakingButton = forwardRef(({
+interface BreakingButtonProps {
+  title: string;
+  style: any;
+  onClick: () => void;
+}
+
+interface BreakingButtonRef {
+  breakButton: () => void;
+}
+
+export const BreakingButton = forwardRef<BreakingButtonRef, BreakingButtonProps>(({
   title,
   style,
   onClick,
-}: {
-  title: string;
-  style: any;
-  onClick: () => {};
 }, ref) => {
   const controls = useAnimation();
   const controlsText = useAnimation();
   const controlsTextBox = useAnimation();
   const controlsFlash = useAnimation();
+  const containerRef = useRef<HTMLDivElement>(null);
   
   function breakButton() {
     controls.start(i => ({
@@ -230,7 +237,7 @@ export const BreakingButton = forwardRef(({
   ];
 
   return (
-    <div ref={ref} style={style} className={styles.container} onClick={onClick}>
+    <div ref={containerRef} style={style} className={styles.container} onClick={onClick}>
       {brokenPieces.map((piece, index) => (
         <motion.img
           key={index}
@@ -264,3 +271,5 @@ export const BreakingButton = forwardRef(({
     </div>
   );
 });
+
+BreakingButton.displayName = 'BreakingButton';

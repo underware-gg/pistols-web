@@ -7,7 +7,7 @@ export default function useSmoothScroll() {
 
   const lastEventTime = useRef(Date.now());
   const accumulatedDeltaY = useRef(0);
-  const scrollEvents = useRef([]);
+  const scrollEvents = useRef<number[]>([]);
 
   function smoothScrollBy(event: any) {
     if (scrollEvents.current.length == 0) {

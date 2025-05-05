@@ -58,7 +58,7 @@ export default function ProgressBar({
             progress={!_disabled && value !== null && !hideValue ? 'value' : false}
             total={total ?? 100}
             className={_className + (hideValue ? ' hide-value' : '')}
-            color={_disabled ? 'grey' : (neutral ? 'grey' : cold ? 'teal' : null)}
+            color={_disabled ? 'grey' : (neutral ? 'grey' : (cold ? 'teal' : undefined))}
             warning={!_disabled && warning}
             error={!_disabled && negative}
             style={{ width: '100%', height: '100%', margin: 0, border: '1px solid rgba(0, 0, 0, 0.2)', boxShadow: '1px 1px 2px 0px rgba(0, 0, 0, 0.8)' }}
