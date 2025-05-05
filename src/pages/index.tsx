@@ -988,9 +988,8 @@ export default function Home() {
                   width: '100%', 
                   height: 'auto',
                   aspectRatio: '16/9',
-                  margin: 'auto 0',
+                  margin: '0 0',
                   backgroundColor: '#112233',
-                  padding: '2rem',
                   borderRadius: '8px',
                   border: '3px solid #8a6e4b',
                   boxShadow: '0 0.4vmin 1.2vmin rgba(0, 0, 0, 0.5)',
@@ -998,30 +997,25 @@ export default function Home() {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  {/* Video or visualization space */}
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: 'min(1.8vh, 4.4vmin)', color: '#F4D8A0', lineHeight: '1.6' }}>
-                      <m.img 
-                        src="/images/gamemechanics.gif"
-                        alt="Pistols at Dawn"
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain',
-                        }}
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: false, amount: 0.8 }}
-                        onViewportEnter={() => {
-                          const img = document.querySelector('.comic-gif');
-                          if (img instanceof HTMLImageElement) {
-                            img.src = '/images/comick.gif'; // Reload the GIF to restart it
-                          }
-                        }}
-                        className="comic-gif"
-                      />
-                    </p>
-                  </div>
+                  <m.img 
+                    src="/images/gamemechanics.gif"
+                    alt="Pistols at Dawn"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                    }}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: false, amount: 0.8 }}
+                    onViewportEnter={() => {
+                      const img = document.querySelector('.comic-gif');
+                      if (img instanceof HTMLImageElement) {
+                        img.src = '/images/comick.gif'; // Reload the GIF to restart it
+                      }
+                    }}
+                    className="comic-gif"
+                  />
                 </div>
               </div>
               
