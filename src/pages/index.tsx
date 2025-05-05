@@ -592,7 +592,7 @@ export default function Home() {
             >Play Game</m.a>
             
             <m.a 
-              href="/docs" 
+              href="https://docs.underware.gg/pistols" 
               style={{ 
                 opacity: fixedButtonsOpacity,
                 color: '#F4D8A0', 
@@ -653,7 +653,7 @@ export default function Home() {
                   touchAction: 'auto'
                 }}
                 whileHover={{ scale: 1.1 }}
-                onClick={() => window.location.href='https://prerelease.pistols.gg/'}
+                onClick={() => window.location.href='https://pistols.lootunder.world/'}
                 onMouseEnter={() => setTooltipText("Click to Play Pistols at Dawn")}
                 onMouseLeave={() => setTooltipText(null)}
               />
@@ -825,9 +825,32 @@ export default function Home() {
                   border: '3px solid #8a6e4b',
                   boxShadow: '0 0.4vmin 1.2vmin rgba(0, 0, 0, 0.5)',
                   marginBottom: '2rem',
-                  height: 'calc(100% - 2rem)'
+                  height: 'calc(100% - 2rem)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}>
-                  {/* TODO: Add comic strip? */}
+                  <m.img 
+                    src="/images/comick.gif"
+                    alt="Pistols at Dawn"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                    }}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: false, amount: 0.8 }}
+                    onViewportEnter={() => {
+                      const img = document.querySelector('.comic-gif');
+                      if (img instanceof HTMLImageElement) {
+                        img.src = '/images/comick.gif'; // Reload the GIF to restart it
+                      }
+                    }}
+                    className="comic-gif"
+                  />
                 </div>}
               </div>
             </div>
@@ -978,7 +1001,25 @@ export default function Home() {
                   {/* Video or visualization space */}
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ fontSize: 'min(1.8vh, 4.4vmin)', color: '#F4D8A0', lineHeight: '1.6' }}>
-                      Video demonstration coming soon
+                      <m.img 
+                        src="/images/gamemechanics.gif"
+                        alt="Pistols at Dawn"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          objectFit: 'contain',
+                        }}
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: false, amount: 0.8 }}
+                        onViewportEnter={() => {
+                          const img = document.querySelector('.comic-gif');
+                          if (img instanceof HTMLImageElement) {
+                            img.src = '/images/comick.gif'; // Reload the GIF to restart it
+                          }
+                        }}
+                        className="comic-gif"
+                      />
                     </p>
                   </div>
                 </div>
@@ -1388,8 +1429,8 @@ export default function Home() {
               <div style={{ marginLeft: '6rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 {[
                   { href: 'https://discord.gg/underware', label: 'Underware Discord', tooltip: 'Join our Discord community' },
-                  { href: 'https://x.com/underware', label: 'Underware X', tooltip: 'Follow us on X' },
-                  { href: 'https://github.com/underware', label: 'Underware GitHub', tooltip: 'Check our GitHub' }
+                  { href: 'https://x.com/underware_gg', label: 'Underware X', tooltip: 'Follow us on X' },
+                  { href: 'https://github.com/underware-gg', label: 'Underware GitHub', tooltip: 'Check our GitHub' }
                 ].map(({ href, label, tooltip }) => (
                   <m.div key={label} style={{ display: 'flex', alignItems: 'center' }} whileHover={{ scale: 1.1 }}>
                     <span style={{ marginRight: '0.8rem', fontSize: '1.4rem' }}>•</span>
