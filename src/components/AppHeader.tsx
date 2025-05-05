@@ -15,13 +15,13 @@ export default function AppHeader({
 
 	return (
 		<Head>
-      <title key='title'>{title ?? 'Pistols at 10 blocks'}</title>
+      <title key='title'>{title ?? 'Pistols at Dawn'}</title>
       <link rel='icon' href='/favicon.ico' />
 
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 			<meta key='social_url' property='og:url' content={'https://underware.gg/'} />
-			<meta key='social_title' property='og:title' content={title ?? 'Pistols at 10 blocks'} />
+			<meta key='social_title' property='og:title' content={title ?? 'Pistols at Dawn'} />
 			<meta key='social_desc' property='og:description' content={desc} />
 			<meta key='social_image' property='og:image' content={imageUrl} />
 			<meta key='social_image_type' property='og:image:type' content={'image/png'} />
