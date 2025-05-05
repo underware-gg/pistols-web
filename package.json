@@ -12,13 +12,15 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@mui/material": "^5.15.15",
+    "@tweenjs/tween.js": "^21.0.0",
     "framer-motion": "^11.0.19",
     "next": "13.5.6",
     "react": "^18",
     "react-dom": "^18",
     "sass": "^1.69.5",
     "semantic-ui-css": "^2.5.0",
-    "semantic-ui-react": "^3.0.0-beta.2"
+    "semantic-ui-react": "^3.0.0-beta.2",
+    "use-sound": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",

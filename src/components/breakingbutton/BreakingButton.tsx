@@ -248,7 +248,7 @@ export const BreakingButton = forwardRef(({
         style={{ zIndex: 10, pointerEvents: 'none' }}
         animate={controlsTextBox}
       >
-        <motion.h2 className="Black" animate={controlsText}>{title}</motion.h2>
+        <motion.h2 className="Black" style={{ fontSize: 'min(3.4vh, 6.4vmin)' }} animate={controlsText}>{title}</motion.h2>
       </motion.div>
       {brokenPieces.slice(0, -1).map((piece, index) => (
         <motion.img
