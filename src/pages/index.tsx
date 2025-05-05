@@ -1410,7 +1410,7 @@ export default function Home() {
         <m.div className="BottomFooter tilt-right" style={{ y: footerY }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'nowrap', overflowX: 'auto' }}>
             {/* Left: Logo + Links */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible' }}>
               <m.div style={{ height: '12vh', marginLeft: '1rem', marginBottom: '1rem' }} whileHover={{ scale: 1.1 }}>
                 <a 
                   href="https://underware.gg/" 
@@ -1419,7 +1419,7 @@ export default function Home() {
                   onMouseEnter={() => setTooltipText("Learn more about us")}
                   onMouseLeave={() => setTooltipText(null)}
                 >
-                  <img src="/images/Underware.svg" alt="Underware Logo" style={{ height: '12vh', width: '10vw', minWidth: '6vh', objectFit: 'contain' }} />
+                  <img src="/images/underware.svg" alt="Underware Logo" style={{ height: '12vh', width: '10vw', minWidth: '6vh', objectFit: 'contain' }} />
                 </a>
               </m.div>
 
