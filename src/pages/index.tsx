@@ -574,7 +574,7 @@ export default function Home() {
             gap: '1.6vmin',
           }}>
             <m.a 
-              href="https://pistols.lootunder.world/" 
+              href="https://play.pistols.gg/" 
               style={{ 
                 opacity: fixedButtonsOpacity,
                 color: '#000', 
@@ -656,7 +656,7 @@ export default function Home() {
                   touchAction: 'auto'
                 }}
                 whileHover={{ scale: 1.1 }}
-                onClick={() => window.location.href="https://pistols.lootunder.world/"}
+                onClick={() => window.location.href="https://play.pistols.gg/"}
                 onMouseEnter={() => setTooltipText("Click to Play Pistols at Dawn")}
                 onMouseLeave={() => setTooltipText(null)}
               />
@@ -664,7 +664,7 @@ export default function Home() {
           </m.div>
 
           <m.a className="HeaderLayer"
-            href="https://pistols.lootunder.world/"
+            href="https://play.pistols.gg/"
             style={{ 
               zIndex: 991, 
               position: 'fixed', 
@@ -736,7 +736,7 @@ export default function Home() {
           </m.div>
           
           <m.div className="HeaderLayer DisplayFlex Centered" style={{ zIndex: 2, scale: buttonScale, top: playButtonY }}>
-            <BreakingButton title="Play Game" onClick={() => window.location.href="https://pistols.lootunder.world/"} style={{  }}/>
+            <BreakingButton title="Play Game" onClick={() => window.location.href="https://play.pistols.gg/"} style={{  }}/>
           </m.div>
           <m.div className="HeaderLayer" style={{ y: clouds2Y, zIndex: 1, opacity: clouds2Opacity, overflowX: 'clip' }}>
             {clouds2}
@@ -796,7 +796,7 @@ export default function Home() {
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
                   <m.a 
-                    href="https://pistols.lootunder.world/" 
+                    href="https://play.pistols.gg/" 
                     style={{ 
                       color: '#000', 
                       textDecoration: 'none', 
@@ -1214,7 +1214,7 @@ export default function Home() {
                   
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
                     <m.a 
-                      href="https://pistols.lootunder.world/" 
+                      href="https://play.pistols.gg/" 
                       style={{ 
                         color: '#000', 
                         textDecoration: 'none', 
@@ -1333,7 +1333,7 @@ export default function Home() {
                     </m.a> */}
                     
                     <m.a 
-                      href="https://pistols.lootunder.world/" 
+                      href="https://play.pistols.gg/" 
                       style={{ 
                         color: '#000', 
                         textDecoration: 'none', 
@@ -1403,7 +1403,7 @@ export default function Home() {
           <div style={{ height: '50vh',  minHeight: 600, width: '100%' }}/>
           <div className="Paragraph DisplayFlex" style={{ flexDirection: 'column-reverse' }}>
             <m.div ref={breakButtonContainerRef} className="DisplayFlex Centered" style={{ position: 'fixed', y: buttonExit, top: buttonEnter, left: 0, right: 0, scale: buttonScale }}>
-              <BreakingButton title="Play Game" ref={breakButtonRef} onClick={() => window.location.href='https://pistols.lootunder.world/'} style={{  }}/>
+              <BreakingButton title="Play Game" ref={breakButtonRef} onClick={() => window.location.href='https://play.pistols.gg/'} style={{  }}/>
                   </m.div>
           </div>
         </div>
