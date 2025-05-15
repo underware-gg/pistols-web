@@ -889,6 +889,7 @@ export default function Home() {
                   className="social-card"
                   onMouseEnter={() => setTooltipText("The barkeep&apos;s blueprints. Code, scrolls, and schematics from the boldest patrons.<br />If you&apos;re building, fixing, or breaking… start here.")}
                   onMouseLeave={() => setTooltipText(null)}
+                  onClick={() => window.open('https://github.com/underware-gg/pistols', '_blank')}
                 >
                   <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
                     <img src="/images/socials_github.png" alt="GitHub" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -916,6 +917,7 @@ export default function Home() {
                   className="social-card"
                   onMouseEnter={() => setTooltipText("Where patrons whisper, wager, and weave conspiracies.<br />If you want answers—or allies—this is where you knock.")}
                   onMouseLeave={() => setTooltipText(null)}
+                  onClick={() => window.open(' https://discord.com/invite/realmsworld', '_blank')}
                 >
                   <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
                     <img src="/images/socials_discord.png" alt="Discord" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -943,6 +945,7 @@ export default function Home() {
                   className="social-card" 
                   onMouseEnter={() => setTooltipText("Duels, drama, and death threats—pinned for all to see.<br />If it&apos;s loud, it ends up here.")}
                   onMouseLeave={() => setTooltipText(null)}
+                  onClick={() => window.open('https://x.com/pistols_gg', '_blank')}
                 >
                   <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
                     <img src="/images/socials_x.png" alt="X" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1408,7 +1411,7 @@ export default function Home() {
           </div>
         </div>
         <m.div className="BottomFooter tilt-right" style={{ y: footerY }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'nowrap', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'nowrap' }}>
             {/* Left: Logo + Links */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', overflow: 'visible' }}>
               <m.div style={{ height: '12vh', marginLeft: '1rem', marginBottom: '1rem' }} whileHover={{ scale: 1.1 }}>
@@ -1425,7 +1428,7 @@ export default function Home() {
 
               <div style={{ marginLeft: '6rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 {[
-                  { href: 'https://discord.gg/underware', label: 'Underware Discord', tooltip: 'Join our Discord community' },
+                  { href: 'https://discord.com/invite/realmsworld', label: 'Underware Discord', tooltip: 'Join our Discord community' },
                   { href: 'https://x.com/underware_gg', label: 'Underware X', tooltip: 'Follow us on X' },
                   { href: 'https://github.com/underware-gg', label: 'Underware GitHub', tooltip: 'Check our GitHub' }
                 ].map(({ href, label, tooltip }) => (
