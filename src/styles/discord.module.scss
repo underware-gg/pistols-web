@@ -1,0 +1,610 @@
+// ─────────────────────────────────────────────────────────────
+// Discord bot landing page (/discord)
+// Ported from the standalone landing repo. Everything is nested
+// under `.page` so it is fully scoped: bare element selectors
+// (section, footer, p, h2…) become `.page section` etc. and
+// out-specify the site's global element styles in styles.scss.
+// All `rem` values converted to absolute `px` because the site
+// sets html/body font-size to 1.2vmin, which would otherwise
+// break every rem-based size in this design.
+// ─────────────────────────────────────────────────────────────
+
+.page {
+  // Palette (scoped, not on :root, so it can't leak site-wide)
+  --bg: #0a0907;
+  --bg-card: #13110d;
+  --gold: #c8a44e;
+  --gold-dim: #8a7234;
+  --cream: #e8dcc8;
+  --cream-dim: #9a9080;
+  --sepia: #2a2218;
+  --red: #8b3a3a;
+  --border: rgba(200, 164, 78, 0.15);
+
+  // Base typography (was `body` in the original)
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+  text-align: left;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  // Scoped reset (was `*` in the original)
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  // Neutralize the site's global element styles so behaviour
+  // matches the original browser defaults. Class-scoped rules
+  // below have higher specificity and override these.
+  p {
+    font-size: inherit;
+    font-family: inherit;
+    line-height: inherit;
+    text-align: inherit;
+    color: inherit;
+    margin: 0;
+  }
+  a {
+    color: inherit;
+    font-weight: inherit;
+    text-decoration: none;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: inherit;
+    line-height: inherit;
+    margin: 0;
+    color: inherit;
+    font-weight: 700;
+  }
+
+  // ── Hero ────────────────────────────────────────────
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/images/discord/splash.jpg') center/cover no-repeat;
+    filter: brightness(0.3) saturate(0.8);
+    z-index: 0;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, var(--bg) 100%);
+    z-index: 1;
+  }
+  .hero > * { position: relative; z-index: 2; }
+
+  .logo { max-width: 320px; margin-bottom: 12px; filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5)); }
+
+  .hero h1 {
+    font-size: clamp(35.2px, 6vw, 64px);
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-shadow: 0 2px 30px rgba(200, 164, 78, 0.3);
+    margin-bottom: 16px;
+  }
+  .hero p {
+    font-size: clamp(17.6px, 2.5vw, 22.4px);
+    color: var(--cream);
+    max-width: 560px;
+    line-height: 1.6;
+    font-style: italic;
+    margin-bottom: 32px;
+  }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 36px;
+    background: var(--gold);
+    color: var(--bg);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 17.6px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .cta:hover {
+    background: #dbb85c;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(200, 164, 78, 0.3);
+  }
+  .cta svg { width: 24px; height: 24px; fill: var(--bg); }
+
+  .heroSub {
+    margin-top: 16px;
+    font-size: 14.4px;
+    color: var(--cream-dim);
+  }
+  .heroSub a { color: var(--gold-dim); text-decoration: none; }
+  .heroSub a:hover { color: var(--gold); }
+
+  // ── Section base ───────────────────────────────────
+  section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 80px 24px;
+  }
+  section h2 {
+    font-size: clamp(25.6px, 4vw, 38.4px);
+    color: var(--gold);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  section .sub {
+    text-align: center;
+    color: var(--cream);
+    font-style: italic;
+    font-size: 17.6px;
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.55;
+  }
+
+  // ── Cards grid ─────────────────────────────────────
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 24px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover {
+    border-color: rgba(200, 164, 78, 0.35);
+    transform: translateY(-3px);
+  }
+  .card .icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  .card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16.8px;
+    font-weight: 600;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+  .card p {
+    font-size: 16px;
+    color: var(--cream);
+    line-height: 1.65;
+  }
+
+  // ── How it works ───────────────────────────────────
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    counter-reset: step;
+  }
+  .step {
+    text-align: center;
+    padding: 24px 16px;
+  }
+  .step::before {
+    counter-increment: step;
+    content: counter(step);
+    display: block;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    border-radius: 50%;
+    background: var(--sepia);
+    border: 2px solid var(--gold-dim);
+    color: var(--gold);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 17.6px;
+    margin: 0 auto 16px;
+  }
+  .step h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15.2px;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+  .step p {
+    font-size: 15.2px;
+    color: var(--cream);
+    line-height: 1.55;
+  }
+
+  // ── Pistol divider ─────────────────────────────────
+  .divider {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .divider img {
+    width: 200px;
+    opacity: 0.25;
+    filter: sepia(1) brightness(1.2);
+  }
+
+  // ── ASCII preview ──────────────────────────────────
+  .preview {
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 500px;
+    margin: 0 auto 40px;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 15.2px;
+    line-height: 1.5;
+    color: var(--cream);
+    text-align: center;
+    white-space: pre;
+  }
+
+  // ── Stats bar ──────────────────────────────────────
+  .statsBar {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 0 auto;
+    max-width: 600px;
+  }
+  .stat { text-align: center; }
+  .stat .num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 38.4px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .stat .label {
+    font-size: 12.8px;
+    color: var(--cream-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+
+  // ── Bottom CTA ─────────────────────────────────────
+  .bottomCta {
+    text-align: center;
+    padding: 80px 24px;
+    background: var(--sepia);
+  }
+  .bottomCta h2 {
+    font-size: clamp(28.8px, 4vw, 41.6px);
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .bottomCta p {
+    color: var(--cream);
+    font-size: 17.6px;
+    font-style: italic;
+    margin-bottom: 28px;
+  }
+
+  // ── Server admin guide ─────────────────────────────
+  .adminGuide {
+    background: rgba(42, 34, 24, 0.28);
+    border-top: 1px solid rgba(200, 164, 78, 0.18);
+    border-bottom: 1px solid rgba(200, 164, 78, 0.18);
+    padding: 72px 24px 80px;
+    position: relative;
+  }
+  .adminGuide .eyebrow {
+    text-align: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11.2px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 10px;
+  }
+  .adminGuide .adminInner {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .adminGuide h2 { text-align: center; }
+  .adminGuide .sub {
+    text-align: center;
+    color: var(--cream-dim);
+    font-style: italic;
+    margin-bottom: 56px;
+  }
+
+  .adminSteps {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .adminStep {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .adminStep .stepNum {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 38.4px;
+    font-style: italic;
+    color: var(--gold);
+    line-height: 1;
+    text-align: right;
+    border-right: 1px solid rgba(200, 164, 78, 0.25);
+    padding-right: 18px;
+    padding-top: 4px;
+  }
+  .adminStep h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16.8px;
+    color: var(--gold);
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .adminStep p {
+    color: var(--cream);
+    font-size: 15.2px;
+    line-height: 1.65;
+    margin-bottom: 10px;
+  }
+  .adminStep p.tip {
+    color: var(--cream-dim);
+    font-size: 14.08px;
+    font-style: italic;
+    line-height: 1.6;
+  }
+  .adminStep code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13.12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(200, 164, 78, 0.2);
+    color: var(--gold);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .settingsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 14.08px;
+  }
+  .settingsTable th {
+    text-align: left;
+    color: var(--gold-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11.2px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 10px;
+    border-bottom: 1px solid rgba(200, 164, 78, 0.22);
+  }
+  .settingsTable td {
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--cream);
+    line-height: 1.55;
+    vertical-align: top;
+  }
+  .settingsTable td.setting {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    color: var(--gold);
+    font-size: 13.12px;
+    white-space: nowrap;
+  }
+  .settingsTable td.default {
+    color: var(--cream-dim);
+    font-style: italic;
+    white-space: nowrap;
+    font-size: 13.6px;
+  }
+
+  .doesDoesnt {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 14px;
+  }
+  .doesDoesnt h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11.84px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .doesDoesnt .does h4 { color: var(--gold); }
+  .doesDoesnt .doesnt h4 { color: var(--cream-dim); }
+  .doesDoesnt ul {
+    list-style: none;
+    padding: 0;
+  }
+  .doesDoesnt li {
+    font-size: 14.72px;
+    color: var(--cream);
+    line-height: 1.6;
+    padding: 6px 0 6px 22px;
+    position: relative;
+  }
+  .doesDoesnt .does li::before {
+    content: '\2713';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .doesDoesnt .doesnt li::before {
+    content: '\00d7';
+    position: absolute;
+    left: 0;
+    color: var(--cream-dim);
+    font-weight: 700;
+  }
+
+  @media (max-width: 640px) {
+    .adminStep {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .adminStep .stepNum {
+      text-align: left;
+      border-right: none;
+      border-bottom: 1px solid rgba(200, 164, 78, 0.25);
+      padding-right: 0;
+      padding-bottom: 8px;
+      width: fit-content;
+    }
+    .doesDoesnt {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .settingsTable {
+      font-size: 13.12px;
+    }
+    .settingsTable th,
+    .settingsTable td {
+      padding: 8px 6px;
+    }
+  }
+
+  // ── Footer ─────────────────────────────────────────
+  footer {
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--cream-dim);
+    font-size: 13.6px;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--gold-dim); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+  .footerLinks {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 12px;
+  }
+
+  // ── Card tables ─────────────────────────────────────
+  .cardTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 15.2px;
+  }
+  .cardTable th {
+    text-align: left;
+    color: var(--gold-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cardTable td {
+    padding: 8px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    color: var(--cream);
+    line-height: 1.55;
+  }
+  .cardTable td strong { color: var(--cream); }
+  .cardTable .copies { color: var(--gold-dim); font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+
+  .detailGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    margin-top: 32px;
+  }
+  .detailBlock {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 24px;
+  }
+  .detailBlock h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18.4px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .detailBlock > p {
+    color: var(--cream);
+    font-size: 16px;
+    line-height: 1.65;
+    margin-bottom: 16px;
+  }
+
+  // Inline-style replacements (ported from original inline styles)
+  .eyebrow {
+    text-align: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11.2px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 10px;
+  }
+  .noteCenter {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 15.2px;
+    color: var(--cream-dim);
+    font-style: italic;
+    a { color: var(--gold); }
+  }
+  .previewCaption {
+    text-align: center;
+    color: var(--cream);
+    font-style: italic;
+    font-size: 16px;
+  }
+  .tableNote {
+    margin-top: 12px;
+    font-size: 15.2px;
+    font-style: normal;
+    color: var(--cream);
+  }
+
+  // ── Mobile ─────────────────────────────────────────
+  @media (max-width: 600px) {
+    .cards { grid-template-columns: 1fr !important; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .statsBar { gap: 32px; }
+    .hero { min-height: 90vh; }
+  }
+}
