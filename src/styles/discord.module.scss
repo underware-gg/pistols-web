@@ -28,6 +28,11 @@
   line-height: 1.6;
   background: var(--bg);
   color: var(--cream);
+  // The site's global `body { display: flex }` makes this page a flex item
+  // that would otherwise shrink to its content width (~960px) and leave the
+  // right half of the viewport blank. `min-width: 100vw` forces it full-width,
+  // mirroring how the site's own `.App` wrapper handles this.
+  min-width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
   text-align: left;
