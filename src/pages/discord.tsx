@@ -135,7 +135,11 @@ export default function Discord() {
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap"
         />
 
-        {/* Open Graph */}
+        {/* Open Graph — page-specific title/description/url only.
+            og:image / twitter:image are intentionally NOT set here: the
+            site-wide default image in _document.tsx already provides one,
+            and next/head cannot dedupe against _document, so setting a
+            second image here makes Discord render a two-image gallery. */}
         <meta key="og_type" property="og:type" content="website" />
         <meta key="og_url" property="og:url" content="https://pistols.gg/discord" />
         <meta key="og_title" property="og:title" content="Pistols at Dawn: Discord Bot" />
@@ -143,11 +147,6 @@ export default function Discord() {
           key="og_desc"
           property="og:description"
           content="Settle your disputes in Discord. A duelling game where honour is earned at ten paces."
-        />
-        <meta
-          key="og_image"
-          property="og:image"
-          content="https://pistols.gg/images/discord/splash.jpg"
         />
 
         {/* Twitter */}
@@ -157,11 +156,6 @@ export default function Discord() {
           key="tw_desc"
           name="twitter:description"
           content="Settle your disputes in Discord. A duelling game where honour is earned at ten paces."
-        />
-        <meta
-          key="tw_image"
-          name="twitter:image"
-          content="https://pistols.gg/images/discord/splash.jpg"
         />
       </Head>
 
