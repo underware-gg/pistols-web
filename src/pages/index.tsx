@@ -419,38 +419,6 @@ export default function Home() {
   return (
     <App>
       <div style={{ backgroundColor: '#808080' }}>
-        {/* Discord bot banner — shown once the intro is dismissed. Links to the /discord subpage. */}
-        {hasEntered && (
-          <a
-            href="/discord"
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              zIndex: 50,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.6em',
-              padding: '0.6em 1em',
-              boxSizing: 'border-box',
-              background: 'rgba(10, 9, 7, 0.82)',
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
-              borderBottom: '1px solid rgba(200, 164, 78, 0.35)',
-              color: '#c8a44e',
-              fontFamily: "'EB Garamond', Georgia, serif",
-              fontSize: 'min(2vh, 3.4vmin)',
-              letterSpacing: '0.5px',
-              textDecoration: 'none',
-              textAlign: 'center',
-            }}
-          >
-            <span>⚔ New — settle it in Discord: play Pistols at Dawn as a bot in your server</span>
-            <span style={{ fontWeight: 700 }}>→</span>
-          </a>
-        )}
         {!hasEntered && <m.div id="overlay" className={disablePointer ? 'NoTouch NoMouse' : 'YesTouch YesMouse'}>
           <m.div 
             animate={overlayControls}
