@@ -9,6 +9,19 @@
 // break every rem-based size in this design.
 // ─────────────────────────────────────────────────────────────
 
+// Subtle woven-fabric grain, pulled from the game's art. Sits above
+// an element's background but below its content (see z-index usage).
+@mixin fabric-texture($opacity: 0.05) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/discord/black-orchid.png');
+  background-size: 260px;
+  opacity: $opacity;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .page {
   // Palette (scoped, not on :root, so it can't leak site-wide)
   --bg: #0a0907;
@@ -251,12 +264,18 @@
   // ── Pistol divider ─────────────────────────────────
   .divider {
     text-align: center;
-    padding: 20px 0;
+    padding: 24px 0 8px;
+    overflow: hidden;
   }
-  .divider img {
-    width: 200px;
-    opacity: 0.25;
-    filter: sepia(1) brightness(1.2);
+  // Dramatic firing-flintlock art; its dark rectangular background is
+  // faded into the page with a radial mask so no hard edges show.
+  .dividerShot {
+    display: block;
+    width: 100%;
+    max-width: 660px;
+    margin: 0 auto;
+    -webkit-mask-image: radial-gradient(ellipse 68% 62% at 50% 50%, #000 48%, transparent 100%);
+    mask-image: radial-gradient(ellipse 68% 62% at 50% 50%, #000 48%, transparent 100%);
   }
 
   // ── ASCII preview ──────────────────────────────────
@@ -307,6 +326,32 @@
     text-align: center;
     padding: 80px 24px;
     background: var(--sepia);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    &::after { @include fabric-texture(0.06); }
+  }
+  // Two duelists facing inward, flanking the final call to action.
+  .duelistLeft,
+  .duelistRight {
+    position: absolute;
+    bottom: 0;
+    height: 300px;
+    opacity: 0.85;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.5));
+  }
+  .duelistLeft { left: 1%; }
+  .duelistRight { right: 1%; transform: scaleX(-1); }
+  .bottomInner {
+    position: relative;
+    z-index: 1;
+  }
+  @media (max-width: 900px) {
+    .duelistLeft,
+    .duelistRight { display: none; }
   }
   .bottomCta h2 {
     font-size: clamp(28.8px, 4vw, 41.6px);
@@ -327,6 +372,8 @@
     border-bottom: 1px solid rgba(200, 164, 78, 0.18);
     padding: 72px 24px 80px;
     position: relative;
+    isolation: isolate;
+    &::after { @include fabric-texture(0.06); }
   }
   .adminGuide .eyebrow {
     text-align: center;
@@ -340,6 +387,8 @@
   .adminGuide .adminInner {
     max-width: 880px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
   }
   .adminGuide h2 { text-align: center; }
   .adminGuide .sub {
@@ -559,7 +608,28 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 28px 24px;
+    position: relative;
+    isolation: isolate;
+    &::after { @include fabric-texture(0.05); border-radius: 8px; }
+    > * { position: relative; z-index: 1; }
   }
+
+  // Fanned card backs introducing the card reference section.
+  .cardFan {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin: 4px 0 20px;
+  }
+  .cardFan img {
+    width: 78px;
+    height: auto;
+    border-radius: 7px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+  }
+  .cardFan img:nth-child(1) { transform: rotate(-11deg) translateX(18px); }
+  .cardFan img:nth-child(2) { transform: translateY(-8px); z-index: 2; }
+  .cardFan img:nth-child(3) { transform: rotate(11deg) translateX(-18px); }
   .detailBlock h3 {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 18.4px;

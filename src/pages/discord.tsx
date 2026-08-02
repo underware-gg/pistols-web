@@ -264,7 +264,7 @@ export default function Discord() {
 
         {/* ── DIVIDER ──────────────────────────────────────── */}
         <div className={styles.divider}>
-          <img src="/images/discord/gun_main.png" alt="" />
+          <img src="/images/discord/pistol_shot.jpg" alt="" className={styles.dividerShot} />
         </div>
 
         {/* ── HOW A DUEL WORKS ─────────────────────────────── */}
@@ -559,6 +559,12 @@ export default function Discord() {
             first serious duel.
           </p>
 
+          <div className={styles.cardFan}>
+            <img src="/images/discord/card_back.png" alt="" />
+            <img src="/images/discord/card_back.png" alt="" />
+            <img src="/images/discord/card_back.png" alt="" />
+          </div>
+
           <div className={styles.detailGrid}>
             {/* ENV CARDS */}
             <div className={styles.detailBlock}>
@@ -732,12 +738,16 @@ export default function Discord() {
 
         {/* ── BOTTOM CTA ───────────────────────────────────── */}
         <div className={styles.bottomCta}>
-          <h2>Settle your disputes</h2>
-          <p>Add the bot. Challenge someone. Let the flintlock do the talking.</p>
-          <a href={DISCORD_INVITE} className={styles.cta}>
-            <DiscordIcon />
-            Add to Discord
-          </a>
+          <img src="/images/discord/duelist_male.png" alt="" className={styles.duelistLeft} />
+          <img src="/images/discord/duelist_female.png" alt="" className={styles.duelistRight} />
+          <div className={styles.bottomInner}>
+            <h2>Settle your disputes</h2>
+            <p>Add the bot. Challenge someone. Let the flintlock do the talking.</p>
+            <a href={DISCORD_INVITE} className={styles.cta}>
+              <DiscordIcon />
+              Add to Discord
+            </a>
+          </div>
         </div>
 
         {/* ── FOOTER ───────────────────────────────────────── */}
