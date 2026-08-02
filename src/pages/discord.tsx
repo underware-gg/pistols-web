@@ -162,7 +162,7 @@ export default function Discord() {
       <main className={styles.page}>
         {/* ── HERO ─────────────────────────────────────────── */}
         <div className={styles.hero}>
-          <img src="/images/logo_text.png" alt="Pistols at Dawn" className={styles.logo} />
+          <img src="/images/discord/logo_text.png" alt="Pistols at Dawn" className={styles.logo} />
           <h1>Settle it in Discord</h1>
           <p>
             Pistols at Dawn is a duelling game your server actually plays. Challenge someone, pick
