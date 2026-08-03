@@ -1,6 +1,10 @@
 import Head from 'next/head'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import styles from '@/styles/discord.module.scss'
+
+// Run before paint on the client (so reveal hiding applies without a flash),
+// but fall back to useEffect on the server to avoid Next's SSR warning.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 const DISCORD_INVITE =
   'https://discord.com/oauth2/authorize?client_id=1477211104454377613&permissions=277025770560&scope=bot%20applications.commands'
@@ -90,6 +94,7 @@ const FRAMES: string[][] = [
 
 export default function Discord() {
   const animRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const el = animRef.current
@@ -114,6 +119,36 @@ export default function Discord() {
     step()
     const timer = setInterval(step, 1200)
     return () => clearInterval(timer)
+  }, [])
+
+  // Reveal sections and cards as they scroll into view. Scoped to this page;
+  // a no-op under prefers-reduced-motion (the CSS keeps everything visible).
+  useIsomorphicLayoutEffect(() => {
+    const root = pageRef.current
+    if (!root) return
+    const els = Array.from(
+      root.querySelectorAll<HTMLElement>(`.${styles.reveal}, .${styles.revealStagger}`)
+    )
+    if (els.length === 0) return
+    if (!('IntersectionObserver' in window)) {
+      // No observer support: leave everything visible (never add animReady).
+      return
+    }
+    // Enable the hiding rules only now that JS is running and can reveal.
+    root.classList.add(styles.animReady)
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.inView)
+            io.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
+    )
+    els.forEach((e) => io.observe(e))
+    return () => io.disconnect()
   }, [])
 
   return (
@@ -159,7 +194,7 @@ export default function Discord() {
         />
       </Head>
 
-      <main className={styles.page}>
+      <main className={styles.page} ref={pageRef}>
         {/* ── HERO ─────────────────────────────────────────── */}
         <div className={styles.hero}>
           <img src="/images/discord/logo_text.png" alt="Pistols at Dawn" className={styles.logo} />
@@ -181,7 +216,7 @@ export default function Discord() {
         </div>
 
         {/* ── WHAT IS IT (approachable pitch, before any mechanics) ── */}
-        <section>
+        <section className={styles.revealStagger}>
           <h2>The whole game, in your channel</h2>
           <p className={styles.sub}>
             Two players, ten paces, one shot to settle it. No download, no rules to memorize. You can
@@ -222,7 +257,7 @@ export default function Discord() {
         </section>
 
         {/* ── WHY IT WORKS ─────────────────────────────────── */}
-        <section>
+        <section className={styles.revealStagger}>
           <h2>Why it works</h2>
           <p className={styles.sub}>A duel bot that pulls its own weight in your server.</p>
 
@@ -266,7 +301,7 @@ export default function Discord() {
         </section>
 
         {/* ── CLASSIC DUEL ─────────────────────────────────── */}
-        <section>
+        <section className={styles.revealStagger}>
           <h2>Classic Duel</h2>
           <p className={styles.sub}>
             Both duelists secretly pick four cards. Cards lock. The duel resolves step by step. Three
@@ -304,12 +339,12 @@ export default function Discord() {
         </section>
 
         {/* ── DIVIDER ──────────────────────────────────────── */}
-        <div className={styles.divider}>
+        <div className={`${styles.divider} ${styles.reveal}`}>
           <img src="/images/discord/pistol_shot.jpg" alt="" className={styles.dividerShot} />
         </div>
 
         {/* ── HOW A DUEL WORKS ─────────────────────────────── */}
-        <section>
+        <section className={styles.revealStagger}>
           <h2>How a duel works</h2>
           <p className={styles.sub}>Four decisions. All chosen blind. All revealed at once.</p>
 
@@ -345,7 +380,7 @@ export default function Discord() {
         </section>
 
         {/* ── ASCII PREVIEW ────────────────────────────────── */}
-        <section style={{ paddingTop: 0 }}>
+        <section style={{ paddingTop: 0 }} className={styles.reveal}>
           <div ref={animRef} className={styles.preview} style={{ minHeight: '7.5em' }} />
           <p className={styles.previewCaption}>
             Duels play out as ASCII animations, right in your Discord channel.
@@ -353,7 +388,7 @@ export default function Discord() {
         </section>
 
         {/* ── WHAT'S INCLUDED ──────────────────────────────── */}
-        <section>
+        <section className={styles.revealStagger}>
           <h2>What&apos;s included</h2>
           <p className={styles.sub}>Everything you need to run duels in your server.</p>
 
@@ -425,7 +460,7 @@ export default function Discord() {
         </section>
 
         {/* ── SERVER ADMIN GUIDE ───────────────────────────── */}
-        <section className={styles.adminGuide}>
+        <section className={`${styles.adminGuide} ${styles.reveal}`}>
           <div className={styles.adminInner}>
             <div className={styles.eyebrow}>For server admins</div>
             <h2>Server Admin Guide</h2>
@@ -592,7 +627,7 @@ export default function Discord() {
         </section>
 
         {/* ── CARD REFERENCE ───────────────────────────────── */}
-        <section id="card-reference">
+        <section id="card-reference" className={styles.revealStagger}>
           <div className={styles.eyebrow}>Reference</div>
           <h2>Card reference</h2>
           <p className={styles.sub}>
@@ -781,7 +816,7 @@ export default function Discord() {
         <div className={styles.bottomCta}>
           <img src="/images/discord/duelist_male.png" alt="" className={styles.duelistLeft} />
           <img src="/images/discord/duelist_female.png" alt="" className={styles.duelistRight} />
-          <div className={styles.bottomInner}>
+          <div className={`${styles.bottomInner} ${styles.revealStagger}`}>
             <h2>Settle your disputes</h2>
             <p>Add the bot. Challenge someone. Let the flintlock do the talking.</p>
             <a href={DISCORD_INVITE} className={styles.cta}>

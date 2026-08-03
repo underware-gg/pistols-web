@@ -22,6 +22,12 @@
   z-index: 0;
 }
 
+// Slow Ken Burns drift on the hero art.
+@keyframes heroPan {
+  from { transform: scale(1); }
+  to { transform: scale(1.09); }
+}
+
 .page {
   // Palette (scoped, not on :root, so it can't leak site-wide)
   --bg: #0a0907;
@@ -681,5 +687,50 @@
     .steps { grid-template-columns: 1fr 1fr; }
     .statsBar { gap: 32px; }
     .hero { min-height: 90vh; }
+  }
+
+  // ── Scroll-reveal (only when the user hasn't asked to reduce motion) ──
+  // Progressive enhancement: the hiding rules are gated behind `.animReady`,
+  // which JS adds to the page root on mount. If JS never runs (or fails),
+  // `.animReady` is absent and all content is simply visible. An
+  // IntersectionObserver then adds `.inView` to reveal each element.
+  @media (prefers-reduced-motion: no-preference) {
+    &.animReady {
+      .reveal {
+        opacity: 0;
+        transform: translateY(26px);
+        transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: opacity, transform;
+      }
+      .reveal.inView {
+        opacity: 1;
+        transform: none;
+      }
+
+      // Staggered variant: direct children cascade in.
+      .revealStagger > * {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: opacity, transform;
+      }
+      .revealStagger.inView > * {
+        opacity: 1;
+        transform: none;
+      }
+      .revealStagger.inView > *:nth-child(1) { transition-delay: 0s; }
+      .revealStagger.inView > *:nth-child(2) { transition-delay: 0.09s; }
+      .revealStagger.inView > *:nth-child(3) { transition-delay: 0.18s; }
+      .revealStagger.inView > *:nth-child(4) { transition-delay: 0.27s; }
+      .revealStagger.inView > *:nth-child(5) { transition-delay: 0.36s; }
+      .revealStagger.inView > *:nth-child(6) { transition-delay: 0.45s; }
+      .revealStagger.inView > *:nth-child(7) { transition-delay: 0.54s; }
+      .revealStagger.inView > *:nth-child(8) { transition-delay: 0.63s; }
+    }
+
+    // Ken Burns is pure CSS and safe without JS, so it stays ungated.
+    .hero::before {
+      animation: heroPan 26s ease-in-out infinite alternate;
+    }
   }
 }
