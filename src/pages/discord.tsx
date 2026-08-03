@@ -165,9 +165,9 @@ export default function Discord() {
           <img src="/images/discord/logo_text.png" alt="Pistols at Dawn" className={styles.logo} />
           <h1>Settle it in Discord</h1>
           <p>
-            Pistols at Dawn is a duelling game your server actually plays. Challenge someone, pick
-            your cards blind, and watch the duel play out, right in the channel. No wallets. No gas.
-            Just flintlocks.
+            A duelling game that lives entirely in your Discord. Challenge someone and the whole
+            duel plays out right there in the channel, for everyone to watch. No app to install,
+            no wallet, nothing to learn before your first shot.
           </p>
 
           <a href={DISCORD_INVITE} className={styles.cta}>
@@ -179,6 +179,47 @@ export default function Discord() {
             Free to use · No wallet required · <a href="https://pistols.gg">pistols.gg</a>
           </p>
         </div>
+
+        {/* ── WHAT IS IT (approachable pitch, before any mechanics) ── */}
+        <section>
+          <h2>The whole game, in your channel</h2>
+          <p className={styles.sub}>
+            Two players, ten paces, one shot to settle it. No download, no rules to memorize. You can
+            be in your first duel thirty seconds after adding the bot.
+          </p>
+
+          <div
+            className={styles.cards}
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}
+          >
+            <div className={styles.card}>
+              <div className={styles.icon}>🎯</div>
+              <h3>Challenge anyone</h3>
+              <p>
+                One command starts it. Call out a specific player, or throw an open challenge any
+                member of the channel can accept. Then pick your premise: honour, blood, or nothing at
+                all.
+              </p>
+            </div>
+            <div className={styles.card}>
+              <div className={styles.icon}>🎬</div>
+              <h3>Watch it play out</h3>
+              <p>
+                The duel resolves live, right in the channel, as an ASCII animation. Paces count down,
+                shots ring out, someone is left standing. Everyone watching gets the show.
+              </p>
+            </div>
+            <div className={styles.card}>
+              <div className={styles.icon}>🎴</div>
+              <h3>It plays itself at first</h3>
+              <p>
+                New players don&apos;t pick a thing. Your first duels are played for you, so you just
+                accept, watch, and pick up the game by seeing it. Full manual control unlocks the more
+                you duel.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* ── WHY IT WORKS ─────────────────────────────────── */}
         <section>
@@ -328,9 +369,10 @@ export default function Discord() {
             </div>
             <div className={styles.card}>
               <div className={styles.icon}>📊</div>
-              <h3>Stats &amp; Leaderboard</h3>
+              <h3>Stats &amp; streaks</h3>
               <p>
-                Win/loss tracking with <code>/mystats</code>. Every duel recorded. Flex your record.
+                <code>/mystats</code> tracks your record and your current and best win streak. Every
+                duel is saved to your history.
               </p>
             </div>
             <div className={styles.card}>
@@ -350,20 +392,19 @@ export default function Discord() {
               </p>
             </div>
             <div className={styles.card}>
-              <div className={styles.icon}>🌟</div>
-              <h3>On-Chain Parity</h3>
+              <div className={styles.icon}>🎴</div>
+              <h3>Starts on auto-play</h3>
               <p>
-                Same 34-card deck, same blades mechanics, same flat 50% hit chance as the on-chain
-                game. Verified against the Cairo source.
+                First-time players are handed a starter pistol that plays the round for them. Accept,
+                watch, and learn the game by seeing it. Manual control unlocks after a few duels.
               </p>
             </div>
             <div className={styles.card}>
-              <div className={styles.icon}>🎮</div>
-              <h3>Wallet-Linked Players</h3>
+              <div className={styles.icon}>🔫</div>
+              <h3>A pistol for every style</h3>
               <p>
-                Link your Cartridge controller or wallet address. Challenge anyone in the wider Pistols
-                ecosystem with <code>/duel wallet 0x...</code> or <code>/duel controller username</code>.
-                Token balance lookups built in.
+                Each pistol plays the round its own way: one holds its fire, one shoots early, one
+                keeps you guessing. Swap between duels with <code>/pistols</code> and find your match.
               </p>
             </div>
           </div>
