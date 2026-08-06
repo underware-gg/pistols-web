@@ -1,33 +1,48 @@
 import App from "@/components/App";
 import { BreakingButton } from "@/components/breakingbutton/BreakingButton";
 import generateCloudComponents from "@/components/Cloud";
+import { DuelistSprite, type DuelistSpriteHandle } from "@/components/DuelistSprite";
 import { MouseToolTip } from "@/components/MouseToolTip";
-import useSmoothScroll from "@/hooks/useSmoothScroll";
+import ViewportVideo from "@/components/ViewportVideo";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
 import { smoothScrollToPercentage } from "@/utils/smoothScroll";
-import { animate, easeIn, easeInOut, easeOut, motion as m, useAnimationControls, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { animate, easeIn, easeInOut, easeOut, motion as m, useAnimationControls, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Image as Img } from "semantic-ui-react";
+import NextImage from "next/image";
 import ParagraphWrapper from '../components/ParagraphWrapper';
 import SelectDuelistModal from "@/components/SelectDuelistModal";
-import * as TWEEN from '@tweenjs/tween.js'
+
+// The source frames are 2:1. Unlike <img>, the sprite <div> has no intrinsic
+// dimensions, so keep its responsive width and height paired explicitly.
+const duelistSpriteDimensions = {
+  height: 'clamp(15vh, 14vw, 60vh)',
+  width: 'clamp(30vh, 28vw, 120vh)',
+};
 
 export default function Home() {
-  const smoothScroll = useSmoothScroll();
   const { width: displayWidth, height: displayHeight } = useWindowDimensions();
+  const prefersReducedMotion = useReducedMotion();
 
   const backgroundImageRef = useRef<any>(null);
   const introBlockRef = useRef<any>(null);
-  const duelistRef = useRef<any>(null);
+  const duelistRef = useRef<DuelistSpriteHandle>(null);
+  const maleDuelistRef = useRef<DuelistSpriteHandle>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const shotSoundRef = useRef<HTMLAudioElement>(null);
   const breakSoundRef = useRef<HTMLAudioElement>(null);
   const breakButtonRef = useRef<any>(null);
   const breakButtonContainerRef = useRef<any>(null);
+  const currentDuelistFrameRef = useRef<{ animation: 'idle' | 'twosteps' | 'shoot'; frame: number }>({
+    animation: 'idle',
+    frame: 1,
+  });
+  const isIdleRef = useRef(true);
+  const hasBrokenRef = useRef(false);
+  const entryAnimationStartedRef = useRef(false);
+  const cancelEntryScrollRef = useRef<(() => void) | null>(null);
 
   const [backgroundHeight, setBackgroundHeight] = useState(0);
-  const [maleDuelistSrc, setMaleDuelistSrc] = useState('/images/duelist/male/idle/frame_001.png');
-  const [femaleDuelistSrc, setFemaleDuelistSrc] = useState('/images/duelist/female/idle/frame_001.png');
   const [isIdle, setIsIdle] = useState(true);
   const [hasEntered, setHasEntered] = useState(false);
   const [disablePointer, setDisablePointer] = useState(true);
@@ -41,24 +56,13 @@ export default function Home() {
   const [buttonScale, setButtonScale] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
+  const [isIntroVisible, setIsIntroVisible] = useState(true);
 
-  // Add a computed value to check if the male duelist is currently in idle animation
-  const isMaleIdle = useMemo(() => maleDuelistSrc.includes('/idle/'), [maleDuelistSrc]);
-
-  // Add animation loop for TWEEN updates
-  useEffect(() => {
-    let animationFrameId: number;
-    
-    const animate = (time?: number) => {
-      animationFrameId = requestAnimationFrame(animate);
-      TWEEN.update(time);
-    };
-    
-    animationFrameId = requestAnimationFrame(animate);
-    
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
+  const setDuelistFrame = useCallback((animation: 'idle' | 'twosteps' | 'shoot', frameNumber: string) => {
+    const frame = Number(frameNumber);
+    currentDuelistFrameRef.current = { animation, frame };
+    maleDuelistRef.current?.setFrame(animation, frame);
+    duelistRef.current?.setFrame(animation, frame);
   }, []);
 
   useEffect(() => {
@@ -78,7 +82,42 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setDuelistShift(0.18 * backgroundImageRef.current.clientHeight);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    let idleCallbackId: number | null = null;
+    let fallbackTimerId: ReturnType<typeof setTimeout> | null = null;
+
+    const preloadSoundtrack = () => {
+      if (!audio.paused || audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return;
+      audio.preload = 'auto';
+      audio.load();
+    };
+
+    const schedulePreload = () => {
+      if ('requestIdleCallback' in window) {
+        idleCallbackId = window.requestIdleCallback(preloadSoundtrack, { timeout: 5000 });
+      } else {
+        fallbackTimerId = setTimeout(preloadSoundtrack, 1000);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      schedulePreload();
+    } else {
+      window.addEventListener('load', schedulePreload, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener('load', schedulePreload);
+      if (idleCallbackId !== null) window.cancelIdleCallback(idleCallbackId);
+      if (fallbackTimerId !== null) clearTimeout(fallbackTimerId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const nextDuelistShift = 0.18 * backgroundImageRef.current.clientHeight;
+    setDuelistShift(nextDuelistShift);
 
     let newHeight = displayHeight - (0.5 * backgroundImageRef.current.clientHeight);
     newHeight = newHeight < 0 ? 0 : newHeight
@@ -93,7 +132,8 @@ export default function Home() {
     newShift -= offset;
     setBackgroundShift(-newShift);
 
-    setButtonEnterShift(displayHeight - (duelistShift + (0.65 * duelistRef.current.clientHeight) + (breakButtonContainerRef.current.clientHeight / 2) - offset));
+    const duelistHeight = duelistRef.current?.getElement()?.clientHeight ?? 0;
+    setButtonEnterShift(displayHeight - (nextDuelistShift + (0.65 * duelistHeight) + (breakButtonContainerRef.current.clientHeight / 2) - offset));
 
     if (displayWidth < displayHeight) {
       var scaleBasedOnAspectRatio = 0.6 * (displayWidth / displayHeight) + 0.4;
@@ -121,6 +161,18 @@ export default function Home() {
       setScrollbarWidth(scrollbarWidth);
     }
   }, [displayHeight, displayWidth]);
+
+  useEffect(() => {
+    const intro = introBlockRef.current;
+    if (!intro) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsIntroVisible(entry.isIntersecting);
+    }, { rootMargin: '200px 0px' });
+
+    observer.observe(intro);
+    return () => observer.disconnect();
+  }, []);
 
   const overlayControls = useAnimationControls();
   const textOverlayControls = useAnimationControls();
@@ -172,7 +224,7 @@ export default function Home() {
   const clouds2Opacity = useTransform(introScrollYProgress, [0.4, 0.66], [1, 0]); //TODO maybe put to 0.9 so the clouds are a bit visible once scrolled down
 
   const clouds1 = useMemo(() => generateCloudComponents(
-    isMobile ? 10 : 50,
+    isMobile ? 10 : 24,
     {min: 10, max: 30}, 
     {min: isMobile ? 200 : 300, max: isMobile ? 400 : 500},  
     {min: -10, max: 40}, 
@@ -181,7 +233,7 @@ export default function Home() {
   ), [isMobile]);
   
   const clouds2 = useMemo(() => generateCloudComponents(
-    isMobile ? 5 : 35, 
+    isMobile ? 10 : 25,
     {min: 10, max: 30}, 
     {min: isMobile ? 300 : 500, max: isMobile ? 600 : 900}, 
     {min: 20, max: 70}, 
@@ -190,7 +242,7 @@ export default function Home() {
   ), [isMobile]);
   
   const clouds2Foreground = useMemo(() => generateCloudComponents(
-    isMobile ? 3 : 6, 
+    isMobile ? 5 : 11,
     {min: 10, max: 30}, 
     {min: isMobile ? 300 : 400, max: isMobile ? 600 : 800}, 
     {min: 30, max: 70}, 
@@ -204,43 +256,45 @@ export default function Home() {
   useEffect(() => {
     if (!isIdle) return;
 
+    setDuelistFrame('idle', '001');
+    if (prefersReducedMotion) return;
+
     let idleFrame = 1;
     const totalIdleFrames = 8;
     const fps = 8;
     
     const idleAnimationInterval = setInterval(() => {
-      if (hasBroken) return;
+      if (hasBrokenRef.current) return;
       idleFrame = (idleFrame % totalIdleFrames) + 1;
       const frameNumber = ('000' + idleFrame.toString()).slice(-3);
-      
-      setMaleDuelistSrc(`/images/duelist/male/idle/frame_${frameNumber}.png`);
-      setFemaleDuelistSrc(`/images/duelist/female/idle/frame_${frameNumber}.png`);
+
+      setDuelistFrame('idle', frameNumber);
     }, 1000 / fps);
     
     return () => {
       clearInterval(idleAnimationInterval);
     };
-  }, [isIdle]);
+  }, [isIdle, prefersReducedMotion, setDuelistFrame]);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (hasBroken) return;
+    if (hasBrokenRef.current) return;
 
-    if (isIdle && latest >= walkStart) {
+    if (isIdleRef.current && latest >= walkStart) {
+      isIdleRef.current = false;
       setIsIdle(false);
-      setMaleDuelistSrc('/images/duelist/male/twosteps/frame_001.png');
-      setFemaleDuelistSrc('/images/duelist/female/twosteps/frame_001.png');
+      setDuelistFrame('twosteps', '001');
       return;
     }
 
-    if (!isIdle && latest < walkStart) {
+    if (!isIdleRef.current && latest < walkStart) {
+      isIdleRef.current = true;
+      setDuelistFrame('idle', '001');
       setIsIdle(true);
       return;
     }
 
-    if (!isIdle) {
-      const regex = /frame_(\d+)\.png/;
-      const match = maleDuelistSrc.match(regex);
-      const lastFrame = match ? match[1] : "001";
+    if (!isIdleRef.current) {
+      const lastFrame = String(currentDuelistFrameRef.current.frame).padStart(3, '0');
 
     if (latest >= walkStart && latest < walkEnd) {
       const animationTime = ((walkEnd - walkStart) / 5)
@@ -248,41 +302,34 @@ export default function Home() {
         const frameNumber = ('000' + currentFrame.toString()).slice(-3)
 
         if (lastFrame != frameNumber && currentFrame % 2 == 0 && currentFrame <= 16) {
-          setMaleDuelistSrc(`/images/duelist/male/twosteps/frame_${frameNumber}.png`)
-          setFemaleDuelistSrc(`/images/duelist/female/twosteps/frame_${frameNumber}.png`)
+          setDuelistFrame('twosteps', frameNumber);
         }
       }
     }
   })
 
   useMotionValueEvent(duelistShoot, "change", (latest) => {
-    if (isIdle) return;
-    
-    const regex = /frame_(\d+)\.png/;
-    
-    const isShooting = maleDuelistSrc.includes('/shoot/');
-    
-    const match = maleDuelistSrc.match(regex);
-    
-    const lastFrame = parseInt(match ? match[1] : "001");
+    if (isIdleRef.current) return;
+
+    const isShooting = currentDuelistFrameRef.current.animation === 'shoot';
+    const lastFrame = currentDuelistFrameRef.current.frame;
 
     const currentFrame = Math.floor(latest / (1 / 16)) + 1
     const frameNumber = ('000' + currentFrame.toString()).slice(-3)
 
-    if (hasBroken && currentFrame <= lastFrame) return
+    if (hasBrokenRef.current && currentFrame <= lastFrame) return
 
     if (lastFrame != currentFrame && currentFrame <= 16) {
-      if (hasBroken && lastFrame < 16 && isShooting) {
+      if (hasBrokenRef.current && lastFrame < 16 && isShooting) {
         const nextFrame = ('000' + (lastFrame + 1).toString()).slice(-3);
-        setMaleDuelistSrc(`/images/duelist/male/shoot/frame_${nextFrame}.png`)
-        setFemaleDuelistSrc(`/images/duelist/female/shoot/frame_${nextFrame}.png`)
-      } else if (!hasBroken) {
-        setMaleDuelistSrc(`/images/duelist/male/shoot/frame_${frameNumber}.png`)
-        setFemaleDuelistSrc(`/images/duelist/female/shoot/frame_${frameNumber}.png`)
+        setDuelistFrame('shoot', nextFrame);
+      } else if (!hasBrokenRef.current) {
+        setDuelistFrame('shoot', frameNumber);
       }
     }
 
-    if (currentFrame == 8 && breakButtonRef.current && !hasBroken && lastFrame < currentFrame && shotSoundRef.current && breakSoundRef.current) {
+    if (currentFrame == 8 && breakButtonRef.current && !hasBrokenRef.current && lastFrame < currentFrame && shotSoundRef.current && breakSoundRef.current) {
+      hasBrokenRef.current = true;
       setHasBroken(true);
       sessionStorage.setItem("hasBroken", "true")
       breakButtonRef.current.breakButton();
@@ -292,74 +339,69 @@ export default function Home() {
   })
 
   useEffect(() => {
-    const handleWheel = (event: any) => {
+    if (hasEntered) return;
+
+    const preventScroll = (event: Event) => {
       event.preventDefault();
-
-      if(!hasEntered) return;
-
-      console.log('wheel', event);
-
-      smoothScroll(event)
     };
 
-    const handleTouch = (event: any) => {
-      if (!hasEntered) event.preventDefault();
-    };
-
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('touchstart', handleTouch, { passive: false });
-    window.addEventListener('touchmove', handleTouch, { passive: false });
-    window.addEventListener('touchend', handleTouch, { passive: false });
+    window.addEventListener('wheel', preventScroll, { passive: false });
+    window.addEventListener('touchmove', preventScroll, { passive: false });
 
     return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('touchstart', handleTouch);
-      window.removeEventListener('touchmove', handleTouch);
-      window.removeEventListener('touchend', handleTouch);
+      window.removeEventListener('wheel', preventScroll);
+      window.removeEventListener('touchmove', preventScroll);
     };
-  }, [smoothScroll, hasEntered]);
+  }, [hasEntered]);
+
+  useEffect(() => () => {
+    cancelEntryScrollRef.current?.();
+  }, []);
 
   function playEnterAnimation() {
-    if (!hasEntered) {
+    if (!hasEntered && !entryAnimationStartedRef.current) {
+      entryAnimationStartedRef.current = true;
+      const transitionDuration = (duration: number) => prefersReducedMotion ? 0 : duration;
       lineOverlayControls.start({
-        width: 0,
+        scaleX: 0,
         transition: {
-          duration: 0.7, ease: 'easeInOut'
+          duration: transitionDuration(0.7), ease: 'easeInOut'
         }
       })
       diamondOverlayControls.start({
         opacity: 0,
         transition: {
-          duration: 0.4, ease: 'easeInOut', delay: 0.45
+          duration: transitionDuration(0.4), ease: 'easeInOut', delay: transitionDuration(0.45)
         }
       })
       overlayControls.start({
         opacity: 0,
         transition: {
-          duration: 1.1, ease: 'easeInOut', delay: 0.5
+          duration: transitionDuration(1.1), ease: 'easeInOut', delay: transitionDuration(0.5)
         }
       })
       animate(
         ".ExitText",
-        { opacity: 0, y: 100 },
+        { opacity: [1, 0], y: [0, 100] },
         {
-          duration: 0.5,
-          delay: 0.2,
+          duration: transitionDuration(0.5),
+          delay: transitionDuration(0.2),
           // delay: stagger(0.2),
           ease: easeInOut
         }
       );
       animate(
         ".RadialGradient",
-        { opacity: 0 },
+        { opacity: [1, 0] },
         {
-          duration: 0.4,
-          delay: 0.4,
+          duration: transitionDuration(0.4),
+          delay: transitionDuration(0.4),
           ease: easeInOut
         }
       );
 
-      smoothScrollToPercentage(walkStart, 1600, () => {
+      cancelEntryScrollRef.current = smoothScrollToPercentage(walkStart, prefersReducedMotion ? 0 : 1600, () => {
+        cancelEntryScrollRef.current = null;
         setHasEntered(true);
         setDisablePointer(true);
         sessionStorage.setItem("disablePointer", "false")
@@ -372,6 +414,12 @@ export default function Home() {
   }
 
   useEffect(() => {
+    if (prefersReducedMotion || hasEntered) {
+      textOverlayControls.stop();
+      textOverlayControls.set({ scale: 1 });
+      return;
+    }
+
     textOverlayControls.start({
       scale: [1, 1.2, 1],
       transition: {
@@ -384,24 +432,14 @@ export default function Home() {
     })
 
     return () => textOverlayControls?.stop();
-  }, []);
+  }, [hasEntered, prefersReducedMotion, textOverlayControls]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (audioRef.current && shotSoundRef.current && breakSoundRef.current) {
-        if (!isMuted) {
-          audioRef.current.volume = 0.15;
-          shotSoundRef.current.volume = 0.3;
-          breakSoundRef.current.volume = 0.3;
-        } else {
-          audioRef.current.volume = 0;
-          shotSoundRef.current.volume = 0;
-          breakSoundRef.current.volume = 0;
-        }
-      }
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    if (!audioRef.current || !shotSoundRef.current || !breakSoundRef.current) return;
+
+    audioRef.current.volume = isMuted ? 0 : 0.15;
+    shotSoundRef.current.volume = isMuted ? 0 : 0.3;
+    breakSoundRef.current.volume = isMuted ? 0 : 0.3;
   }, [isMuted]);
 
   function toggleMute() {
@@ -422,6 +460,7 @@ export default function Home() {
         {!hasEntered && <m.div id="overlay" className={disablePointer ? 'NoTouch NoMouse' : 'YesTouch YesMouse'}>
           <m.div 
             animate={overlayControls}
+            initial={{ opacity: 1 }}
             style={{
               position: 'fixed',
               top: 0, 
@@ -447,6 +486,7 @@ export default function Home() {
           >
             <m.div 
               className="DisplayFlex FlexColumn Centered RadialGradient"
+              initial={{ opacity: 1 }}
               style={{
                 position: 'absolute',
                 top: '87vh',
@@ -458,13 +498,13 @@ export default function Home() {
               }}
             >
               <m.div animate={textOverlayControls} className="CenteredContainer FlexRow TextWidth">
-                <m.h3 className="ExitText TextLeft" style={{ userSelect: 'none' }}>PRESS</m.h3>
-                <m.h3 className="ExitText TextCenter" style={{ userSelect: 'none' }}>TO</m.h3>
-                <m.h3 className="ExitText TextRight" style={{ userSelect: 'none' }}>ENTER</m.h3>
+                <m.h3 initial={{ opacity: 1, y: 0 }} className="ExitText TextLeft" style={{ userSelect: 'none' }}>PRESS</m.h3>
+                <m.h3 initial={{ opacity: 1, y: 0 }} className="ExitText TextCenter" style={{ userSelect: 'none' }}>TO</m.h3>
+                <m.h3 initial={{ opacity: 1, y: 0 }} className="ExitText TextRight" style={{ userSelect: 'none' }}>ENTER</m.h3>
               </m.div>
               <div className="line-container">
-                <m.div animate={lineOverlayControls} className="horizontal-line"></m.div>
-                <m.div animate={diamondOverlayControls} className="diamond">
+                <m.div initial={{ scaleX: 1 }} animate={lineOverlayControls} className="horizontal-line"></m.div>
+                <m.div initial={{ opacity: 1 }} animate={diamondOverlayControls} className="diamond">
                   <div className="diamond-inner"></div>
                 </m.div>
               </div>
@@ -473,20 +513,28 @@ export default function Home() {
         </m.div>}
         <m.div className="PageBackground" style={{ y: backgroundTransformY }}>
           <div style={{ width: '100vw', height: backgroundHeight, overflow: 'hidden', position: 'relative', backgroundColor: '#0347AD' }}>
-            <img 
+            <NextImage
               src='/images/bg_extension_2.png' 
-              alt="Background extension"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
               style={{ 
-                width: '100vw', 
-                height: '100%',
                 objectFit: 'cover',
                 objectPosition: 'bottom',
-                position: 'absolute',
-                bottom: 0
               }} 
             />
           </div>
-          <Img ref={backgroundImageRef} src='/images/bg_duel_scene.png' style={{ height: '100%', width: '100vw', zIndex: -1, y: -2 }} />
+          <NextImage
+            ref={backgroundImageRef}
+            src='/images/bg_duel_scene.png'
+            alt=""
+            width={1024}
+            height={1024}
+            priority
+            sizes="100vw"
+            style={{ height: 'auto', width: '100vw', zIndex: -1 }}
+          />
           <div 
             style={{ 
               transform: 'translate(-50%, 0%)',
@@ -495,48 +543,47 @@ export default function Home() {
               left: '54%', 
             }}
           >
-            <m.img 
+            <DuelistSprite
               ref={duelistRef}
-              src={femaleDuelistSrc}
+              duelist="female"
+              initialAnimation="idle"
+              initialFrame={1}
               alt="Female duelist"
               initial={{ x: 0 }}
               style={{ 
-                willChange : 'contents',
+                willChange: 'transform',
                 x: hasBroken ? '38vw' : duelistWalk,
-                height: '14vw', 
-                width: 'auto',
-                maxHeight: '60vh',
-                minHeight: '15vh',
+                ...duelistSpriteDimensions,
                 zIndex: 0
               }} 
             />
           </div>
           <div 
             style={{ 
-              transform: `translate(-50%, 0%) scaleX(${isMaleIdle ? '1' : '-1'})`,
+              transform: `translate(-50%, 0%) scaleX(${isIdle ? '1' : '-1'})`,
               position: 'absolute', 
               bottom: duelistShift,
               left: '46%', 
             }}
           >
-            <m.img 
-              src={maleDuelistSrc}
+            <DuelistSprite
+              ref={maleDuelistRef}
+              duelist="male"
+              initialAnimation="idle"
+              initialFrame={1}
               alt="Male duelist"
               initial={{ x: 0 }}
               style={{ 
-                willChange : 'contents',
+                willChange: 'transform',
                 x: hasBroken ? '38vw' : duelistWalk,
-                height: '14vw', 
-                width: 'auto',
-                maxHeight: '60vh',
-                minHeight: '15vh',
+                ...duelistSpriteDimensions,
                 zIndex: 0 
               }} 
             />
           </div>
         </m.div>
         <div id="intro" ref={introBlockRef} style={{ position: 'absolute', width: '100%', height: '225vh', top: '0' }}>
-          <m.div className="HeaderLayer" style={{ y: clouds1Y, zIndex: 1, overflowX: 'clip' }}>
+          <m.div className={`HeaderLayer${isIntroVisible ? '' : ' CloudLayer--paused'}`} style={{ y: clouds1Y, zIndex: 1, overflowX: 'clip' }}>
             {clouds1}
           </m.div>
           <m.div className="HeaderLayer" style={{ y: logoY, zIndex: 20 }} 
@@ -738,10 +785,10 @@ export default function Home() {
           <m.div className="HeaderLayer DisplayFlex Centered" style={{ zIndex: 2, scale: buttonScale, top: playButtonY }}>
             <BreakingButton title="Play Game" onClick={() => window.location.href="https://play.pistols.gg/"} style={{  }}/>
           </m.div>
-          <m.div className="HeaderLayer" style={{ y: clouds2Y, zIndex: 1, opacity: clouds2Opacity, overflowX: 'clip' }}>
+          <m.div className={`HeaderLayer${isIntroVisible ? '' : ' CloudLayer--paused'}`} style={{ y: clouds2Y, zIndex: 1, opacity: clouds2Opacity, overflowX: 'clip' }}>
             {clouds2}
           </m.div>
-          <m.div className="HeaderLayer" style={{ y: clouds2Y, zIndex: 995, opacity: clouds2Opacity, overflowX: 'clip' }}>
+          <m.div className={`HeaderLayer${isIntroVisible ? '' : ' CloudLayer--paused'}`} style={{ y: clouds2Y, zIndex: 995, opacity: clouds2Opacity, overflowX: 'clip' }}>
             {clouds2Foreground}
           </m.div>
         </div>
@@ -835,25 +882,29 @@ export default function Home() {
                   justifyContent: 'center',
                   alignItems: 'center'
                 }}>
-                  <m.img 
-                    src="/images/comick.gif"
-                    alt="Pistols at Dawn"
+                  <m.div
                     style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
-                    viewport={{ once: false, amount: 0.8 }}
-                    onViewportEnter={() => {
-                      const img = document.querySelector('.comic-gif');
-                      if (img instanceof HTMLImageElement) {
-                        img.src = '/images/comick.gif'; // Reload the GIF to restart it
-                      }
-                    }}
-                    className="comic-gif"
-                  />
+                    viewport={{ once: true, amount: 0.8 }}
+                  >
+                    <ViewportVideo
+                      src="/images/comick.mp4"
+                      aria-label="Pistols at Dawn"
+                      className="comic-video"
+                      style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      }}
+                    />
+                  </m.div>
                 </div>}
               </div>
             </div>
@@ -891,8 +942,8 @@ export default function Home() {
                   onMouseLeave={() => setTooltipText(null)}
                   onClick={() => window.open('https://github.com/underware-gg/pistols', '_blank')}
                 >
-                  <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
-                    <img src="/images/socials_github.png" alt="GitHub" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#112233' }}>
+                    <NextImage src="/images/socials_github.png" alt="GitHub" fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
                   </div>
                   <div style={{ 
                     position: 'absolute',
@@ -919,8 +970,8 @@ export default function Home() {
                   onMouseLeave={() => setTooltipText(null)}
                   onClick={() => window.open(' https://discord.com/invite/realmsworld', '_blank')}
                 >
-                  <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
-                    <img src="/images/socials_discord.png" alt="Discord" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#112233' }}>
+                    <NextImage src="/images/socials_discord.png" alt="Discord" fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
                   </div>
                   <div style={{ 
                     position: 'absolute',
@@ -947,8 +998,8 @@ export default function Home() {
                   onMouseLeave={() => setTooltipText(null)}
                   onClick={() => window.open('https://x.com/pistols_gg', '_blank')}
                 >
-                  <div style={{ width: '100%', height: '100%', backgroundColor: '#112233' }}>
-                    <img src="/images/socials_x.png" alt="X" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#112233' }}>
+                    <NextImage src="/images/socials_x.png" alt="X" fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
                   </div>
                   <div style={{ 
                     position: 'absolute',
@@ -1003,25 +1054,29 @@ export default function Home() {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <m.img 
-                    src="/images/gamemechanics.gif"
-                    alt="Pistols at Dawn"
+                  <m.div
                     style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
-                    viewport={{ once: false, amount: 0.8 }}
-                    onViewportEnter={() => {
-                      const img = document.querySelector('.comic-gif');
-                      if (img instanceof HTMLImageElement) {
-                        img.src = '/images/comick.gif'; // Reload the GIF to restart it
-                      }
-                    }}
-                    className="comic-gif"
-                  />
+                    viewport={{ once: true, amount: 0.8 }}
+                  >
+                    <ViewportVideo
+                      src="/images/gamemechanics.mp4"
+                      aria-label="Pistols at Dawn gameplay mechanics"
+                      className="game-mechanics-video"
+                      style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      }}
+                    />
+                  </m.div>
                 </div>
               </div>
               
@@ -1465,7 +1520,7 @@ export default function Home() {
                     onMouseLeave={() => setTooltipText(null)}
                   >
                     <div className="logo-inner">
-                      <img src={src} alt={alt} className="partner-logo" />
+                      <img src={src} alt={alt} loading="lazy" decoding="async" className="partner-logo" />
                     </div>
                   </a>
                 </m.div>
@@ -1480,7 +1535,7 @@ export default function Home() {
             <MouseToolTip text={tooltipText} />
           )}
           
-          <audio ref={audioRef} loop autoPlay>
+          <audio ref={audioRef} loop preload="none">
             <source src="/audio/biodecay-song6.mp3" type="audio/mp3" />
           </audio>
           <audio ref={shotSoundRef} src="/audio/sfx/pistol-shot.mp3" />

@@ -588,6 +588,7 @@ TextArea::selection {
   align-items: center;
   min-height: 0;
   height: var(--content-height, auto);
+  contain: layout paint;
   
   // Content container
   .paragraph-content {
@@ -864,6 +865,67 @@ TextArea::selection {
   height: 100vh;
 }
 
+.LandingCloud {
+  position: absolute;
+  opacity: 0;
+  transform: translate3d(var(--cloud-x-0), var(--cloud-y-0), var(--cloud-depth));
+  animation:
+    landing-cloud-drift var(--cloud-duration) linear var(--cloud-delay) infinite both,
+    landing-cloud-fade-in 1s cubic-bezier(0.33, 1, 0.68, 1) 0s 1 both;
+}
+
+.CloudLayer--paused .LandingCloud {
+  animation-play-state: paused;
+}
+
+.ui.image.LandingCloud__image {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: auto;
+}
+
+@keyframes landing-cloud-drift {
+  0% {
+    transform: translate3d(var(--cloud-x-0), var(--cloud-y-0), var(--cloud-depth));
+  }
+  16.6667% {
+    transform: translate3d(var(--cloud-x-1), var(--cloud-y-1), var(--cloud-depth));
+  }
+  33.3333% {
+    transform: translate3d(var(--cloud-x-2), var(--cloud-y-2), var(--cloud-depth));
+  }
+  50% {
+    transform: translate3d(var(--cloud-x-3), var(--cloud-y-3), var(--cloud-depth));
+  }
+  66.6667% {
+    transform: translate3d(var(--cloud-x-4), var(--cloud-y-4), var(--cloud-depth));
+  }
+  83.3333% {
+    transform: translate3d(var(--cloud-x-5), var(--cloud-y-5), var(--cloud-depth));
+  }
+  100% {
+    transform: translate3d(var(--cloud-x-6), var(--cloud-y-0), var(--cloud-depth));
+  }
+}
+
+@keyframes landing-cloud-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: var(--cloud-opacity);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .LandingCloud {
+    opacity: var(--cloud-opacity);
+    transform: translate3d(var(--cloud-rest-x), var(--cloud-y-0), var(--cloud-depth));
+    animation: none;
+  }
+}
+
 .TopHeader {
   position: fixed;
   top: 0;
@@ -890,7 +952,6 @@ TextArea::selection {
   
   &::before {
     background-color: #4d291a;
-    backdrop-filter: blur(0.8vmin);
     transform: translate(-50%, 0) rotate(var(--tilt-angle, 0.4deg));
     box-shadow: 0 0.4vmin 1.2vmin rgba(0, 0, 0, 0.5);
   }
@@ -949,7 +1010,6 @@ TextArea::selection {
   
   &::before {
     background-color: #4d291a;
-    backdrop-filter: blur(0.8vmin);
     transform: translate(-50%, 0) rotate(var(--tilt-angle, 0.4deg));
     box-shadow: 0 -0.4vmin 1.2vmin rgba(0, 0, 0, 0.5);
   }
@@ -1127,6 +1187,7 @@ TextArea::selection {
   height: 2px;
   width: min(30vh, 40vmin);
   background-color: $color-brightest;
+  transform-origin: center;
 }
 
 .diamond {

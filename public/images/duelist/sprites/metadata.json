@@ -1,0 +1,537 @@
+{
+  "version": 2,
+  "atlases": [
+    {
+      "duelist": "female",
+      "animation": "idle",
+      "src": "/images/duelist/sprites/female-idle.png?v=2",
+      "sourceFrame": {
+        "width": 2048,
+        "height": 1024
+      },
+      "frame": {
+        "width": 1024,
+        "height": 512,
+        "count": 8
+      },
+      "atlas": {
+        "width": 4096,
+        "height": 1024,
+        "columns": 4,
+        "rows": 2
+      },
+      "frames": [
+        {
+          "frame": 1,
+          "column": 0,
+          "row": 0
+        },
+        {
+          "frame": 2,
+          "column": 1,
+          "row": 0
+        },
+        {
+          "frame": 3,
+          "column": 2,
+          "row": 0
+        },
+        {
+          "frame": 4,
+          "column": 3,
+          "row": 0
+        },
+        {
+          "frame": 5,
+          "column": 0,
+          "row": 1
+        },
+        {
+          "frame": 6,
+          "column": 1,
+          "row": 1
+        },
+        {
+          "frame": 7,
+          "column": 2,
+          "row": 1
+        },
+        {
+          "frame": 8,
+          "column": 3,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "duelist": "female",
+      "animation": "twosteps",
+      "src": "/images/duelist/sprites/female-twosteps.png?v=2",
+      "sourceFrame": {
+        "width": 1024,
+        "height": 512
+      },
+      "frame": {
+        "width": 1024,
+        "height": 512,
+        "count": 16
+      },
+      "atlas": {
+        "width": 4096,
+        "height": 2048,
+        "columns": 4,
+        "rows": 4
+      },
+      "frames": [
+        {
+          "frame": 1,
+          "column": 0,
+          "row": 0
+        },
+        {
+          "frame": 2,
+          "column": 1,
+          "row": 0
+        },
+        {
+          "frame": 3,
+          "column": 2,
+          "row": 0
+        },
+        {
+          "frame": 4,
+          "column": 3,
+          "row": 0
+        },
+        {
+          "frame": 5,
+          "column": 0,
+          "row": 1
+        },
+        {
+          "frame": 6,
+          "column": 1,
+          "row": 1
+        },
+        {
+          "frame": 7,
+          "column": 2,
+          "row": 1
+        },
+        {
+          "frame": 8,
+          "column": 3,
+          "row": 1
+        },
+        {
+          "frame": 9,
+          "column": 0,
+          "row": 2
+        },
+        {
+          "frame": 10,
+          "column": 1,
+          "row": 2
+        },
+        {
+          "frame": 11,
+          "column": 2,
+          "row": 2
+        },
+        {
+          "frame": 12,
+          "column": 3,
+          "row": 2
+        },
+        {
+          "frame": 13,
+          "column": 0,
+          "row": 3
+        },
+        {
+          "frame": 14,
+          "column": 1,
+          "row": 3
+        },
+        {
+          "frame": 15,
+          "column": 2,
+          "row": 3
+        },
+        {
+          "frame": 16,
+          "column": 3,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "duelist": "female",
+      "animation": "shoot",
+      "src": "/images/duelist/sprites/female-shoot.png?v=2",
+      "sourceFrame": {
+        "width": 1024,
+        "height": 512
+      },
+      "frame": {
+        "width": 1024,
+        "height": 512,
+        "count": 16
+      },
+      "atlas": {
+        "width": 4096,
+        "height": 2048,
+        "columns": 4,
+        "rows": 4
+      },
+      "frames": [
+        {
+          "frame": 1,
+          "column": 0,
+          "row": 0
+        },
+        {
+          "frame": 2,
+          "column": 1,
+          "row": 0
+        },
+        {
+          "frame": 3,
+          "column": 2,
+          "row": 0
+        },
+        {
+          "frame": 4,
+          "column": 3,
+          "row": 0
+        },
+        {
+          "frame": 5,
+          "column": 0,
+          "row": 1
+        },
+        {
+          "frame": 6,
+          "column": 1,
+          "row": 1
+        },
+        {
+          "frame": 7,
+          "column": 2,
+          "row": 1
+        },
+        {
+          "frame": 8,
+          "column": 3,
+          "row": 1
+        },
+        {
+          "frame": 9,
+          "column": 0,
+          "row": 2
+        },
+        {
+          "frame": 10,
+          "column": 1,
+          "row": 2
+        },
+        {
+          "frame": 11,
+          "column": 2,
+          "row": 2
+        },
+        {
+          "frame": 12,
+          "column": 3,
+          "row": 2
+        },
+        {
+          "frame": 13,
+          "column": 0,
+          "row": 3
+        },
+        {
+          "frame": 14,
+          "column": 1,
+          "row": 3
+        },
+        {
+          "frame": 15,
+          "column": 2,
+          "row": 3
+        },
+        {
+          "frame": 16,
+          "column": 3,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "duelist": "male",
+      "animation": "idle",
+      "src": "/images/duelist/sprites/male-idle.png?v=2",
+      "sourceFrame": {
+        "width": 1024,
+        "height": 512
+      },
+      "frame": {
+        "width": 1024,
+        "height": 512,
+        "count": 8
+      },
+      "atlas": {
+        "width": 4096,
+        "height": 1024,
+        "columns": 4,
+        "rows": 2
+      },
+      "frames": [
+        {
+          "frame": 1,
+          "column": 0,
+          "row": 0
+        },
+        {
+          "frame": 2,
+          "column": 1,
+          "row": 0
+        },
+        {
+          "frame": 3,
+          "column": 2,
+          "row": 0
+        },
+        {
+          "frame": 4,
+          "column": 3,
+          "row": 0
+        },
+        {
+          "frame": 5,
+          "column": 0,
+          "row": 1
+        },
+        {
+          "frame": 6,
+          "column": 1,
+          "row": 1
+        },
+        {
+          "frame": 7,
+          "column": 2,
+          "row": 1
+        },
+        {
+          "frame": 8,
+          "column": 3,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "duelist": "male",
+      "animation": "twosteps",
+      "src": "/images/duelist/sprites/male-twosteps.png?v=2",
+      "sourceFrame": {
+        "width": 1024,
+        "height": 512
+      },
+      "frame": {
+        "width": 1024,
+        "height": 512,
+        "count": 16
+      },
+      "atlas": {
+        "width": 4096,
+        "height": 2048,
+        "columns": 4,
+        "rows": 4
+      },
+      "frames": [
+        {
+          "frame": 1,
+          "column": 0,
+          "row": 0
+        },
+        {
+          "frame": 2,
+          "column": 1,
+          "row": 0
+        },
+        {
+          "frame": 3,
+          "column": 2,
+          "row": 0
+        },
+        {
+          "frame": 4,
+          "column": 3,
+          "row": 0
+        },
+        {
+          "frame": 5,
+          "column": 0,
+          "row": 1
+        },
+        {
+          "frame": 6,
+          "column": 1,
+          "row": 1
+        },
+        {
+          "frame": 7,
+          "column": 2,
+          "row": 1
+        },
+        {
+          "frame": 8,
+          "column": 3,
+          "row": 1
+        },
+        {
+          "frame": 9,
+          "column": 0,
+          "row": 2
+        },
+        {
+          "frame": 10,
+          "column": 1,
+          "row": 2
+        },
+        {
+          "frame": 11,
+          "column": 2,
+          "row": 2
+        },
+        {
+          "frame": 12,
+          "column": 3,
+          "row": 2
+        },
+        {
+          "frame": 13,
+          "column": 0,
+          "row": 3
+        },
+        {
+          "frame": 14,
+          "column": 1,
+          "row": 3
+        },
+        {
+          "frame": 15,
+          "column": 2,
+          "row": 3
+        },
+        {
+          "frame": 16,
+          "column": 3,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "duelist": "male",
+      "animation": "shoot",
+      "src": "/images/duelist/sprites/male-shoot.png?v=2",
+      "sourceFrame": {
+        "width": 1024,
+        "height": 512
+      },
+      "frame": {
+        "width": 1024,
+        "height": 512,
+        "count": 16
+      },
+      "atlas": {
+        "width": 4096,
+        "height": 2048,
+        "columns": 4,
+        "rows": 4
+      },
+      "frames": [
+        {
+          "frame": 1,
+          "column": 0,
+          "row": 0
+        },
+        {
+          "frame": 2,
+          "column": 1,
+          "row": 0
+        },
+        {
+          "frame": 3,
+          "column": 2,
+          "row": 0
+        },
+        {
+          "frame": 4,
+          "column": 3,
+          "row": 0
+        },
+        {
+          "frame": 5,
+          "column": 0,
+          "row": 1
+        },
+        {
+          "frame": 6,
+          "column": 1,
+          "row": 1
+        },
+        {
+          "frame": 7,
+          "column": 2,
+          "row": 1
+        },
+        {
+          "frame": 8,
+          "column": 3,
+          "row": 1
+        },
+        {
+          "frame": 9,
+          "column": 0,
+          "row": 2
+        },
+        {
+          "frame": 10,
+          "column": 1,
+          "row": 2
+        },
+        {
+          "frame": 11,
+          "column": 2,
+          "row": 2
+        },
+        {
+          "frame": 12,
+          "column": 3,
+          "row": 2
+        },
+        {
+          "frame": 13,
+          "column": 0,
+          "row": 3
+        },
+        {
+          "frame": 14,
+          "column": 1,
+          "row": 3
+        },
+        {
+          "frame": 15,
+          "column": 2,
+          "row": 3
+        },
+        {
+          "frame": 16,
+          "column": 3,
+          "row": 3
+        }
+      ]
+    }
+  ]
+}

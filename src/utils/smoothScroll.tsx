@@ -1,31 +1,45 @@
 function smoothScrollToPercentage(targetPercentage: number, duration = 1000, onComplete: (() => void) | null = null) {
-    const start = window.scrollY;
-    const windowHeight = window.innerHeight;
-    const scrollHeight = document.documentElement.scrollHeight - windowHeight;
-    const target = scrollHeight * targetPercentage;
+  const start = window.scrollY;
+  const windowHeight = window.innerHeight;
+  const scrollHeight = document.documentElement.scrollHeight - windowHeight;
+  const target = scrollHeight * targetPercentage;
 
-    let startTime: number;
+  let animationFrameId: number | null = null;
+  let startTime: number | null = null;
+  let cancelled = false;
 
-    function animation(currentTime: number) {
-      if (!startTime) startTime = currentTime;
-      const timeElapsed = currentTime - startTime;
-      const progress = Math.min(timeElapsed / duration, 1);
+  function complete() {
+    if (!cancelled) onComplete?.();
+  }
 
-      const nextScrollPosition = start + (target - start) * easeInOutQuart(progress);
-      window.scrollTo({ top: nextScrollPosition, behavior: "instant"  });
+  function animation(currentTime: number) {
+    if (cancelled) return;
+    if (startTime === null) startTime = currentTime;
 
-      if (timeElapsed < duration) {
-        requestAnimationFrame(animation);
-      } else if (onComplete) {
-        onComplete();
-      }
+    const timeElapsed = currentTime - startTime;
+    const progress = duration <= 0 ? 1 : Math.min(timeElapsed / duration, 1);
+    const nextScrollPosition = start + (target - start) * easeInOutQuart(progress);
+    window.scrollTo({ top: nextScrollPosition, behavior: "instant" });
+
+    if (progress < 1) {
+      animationFrameId = requestAnimationFrame(animation);
+    } else {
+      animationFrameId = null;
+      complete();
     }
-
-    requestAnimationFrame(animation);
   }
 
-  function easeInOutQuart(t: number) {
-    return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
-  }
+  animationFrameId = requestAnimationFrame(animation);
 
-  export { smoothScrollToPercentage }
+  return () => {
+    cancelled = true;
+    if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  };
+}
+
+function easeInOutQuart(t: number) {
+  return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+}
+
+export { smoothScrollToPercentage };

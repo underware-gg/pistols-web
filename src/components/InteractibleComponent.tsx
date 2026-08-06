@@ -1,6 +1,7 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import * as TWEEN from '@tweenjs/tween.js'
 import { useAspectSize } from '@/hooks/useAspectSize'
+import { startManagedTween } from '@/utils/tweenScheduler'
 
 export const CARD_WIDTH = 8.5 * 1.4
 export const CARD_HEIGHT = 12 * 1.4
@@ -157,6 +158,23 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
   const idleTweenRef = useRef<TWEEN.Tween<{ x: number; y: number }> | null>(null)
   const blinkTweenRef = useRef<TWEEN.Tween<{ opacity: number }> | null>(null)
 
+  useEffect(() => () => {
+    isBlinkingRef.current = false
+    const tweenRefs = [
+      tweenMovementRef,
+      tweenRotationRef,
+      tweenFlipRotationRef,
+      tweenScaleRef,
+      tweenHighlightRef,
+      tweenVisibilityRef,
+      tweenHangRotationRef,
+      idleTweenRef,
+      blinkTweenRef,
+    ]
+
+    tweenRefs.forEach((tweenRef) => tweenRef.current?.stop())
+  }, [])
+
   useImperativeHandle(ref, () => ({
     flip: flipComponent,
     setPosition: setComponentPosition,
@@ -242,7 +260,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         tweenMovementRef.current.stop()
       }
 
-      tweenMovementRef.current = new TWEEN.Tween(springRef.current)
+      tweenMovementRef.current = startManagedTween(new TWEEN.Tween(springRef.current)
         .to({ x: spring.dataField1, y: spring.dataField2 }, spring.duration)
         .easing(spring.easing)
         .interpolation(spring.interpolation)
@@ -253,8 +271,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
             backgroundRef.current.style.setProperty('--translate-x', `${value.x}px`)
             backgroundRef.current.style.setProperty('--translate-y', `${value.y}px`)
           }
-        })
-        .start()
+        }))
     }
   }, [spring])
 
@@ -264,7 +281,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         tweenRotationRef.current.stop()
       }
 
-      tweenRotationRef.current = new TWEEN.Tween(rotationRef.current)
+      tweenRotationRef.current = startManagedTween(new TWEEN.Tween(rotationRef.current)
         .to({ rotation: rotation.dataField1 }, rotation.duration)
         .easing(rotation.easing)
         .interpolation(rotation.interpolation)
@@ -273,8 +290,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
           if (backgroundRef.current) {
             backgroundRef.current.style.setProperty('--rotation', `${value.rotation}deg`)
           }
-        })
-        .start()
+        }))
     }
   }, [rotation])
 
@@ -284,7 +300,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         tweenFlipRotationRef.current.stop()
       }
 
-      tweenFlipRotationRef.current = new TWEEN.Tween(flipRotationRef.current)
+      tweenFlipRotationRef.current = startManagedTween(new TWEEN.Tween(flipRotationRef.current)
         .to({ rotation: flipRotation.dataField1 }, flipRotation.duration)
         .easing(flipRotation.easing)
         .interpolation(flipRotation.interpolation)
@@ -294,8 +310,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
 
           const componentOutline = backgroundRef.current?.querySelector('.component-outline') as HTMLElement
           componentOutline?.style.setProperty('--flip-rotation', `${value.rotation}deg`);
-        })
-        .start()
+        }))
     }
   }, [flipRotation])
 
@@ -305,7 +320,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         tweenScaleRef.current.stop()
       }
 
-      tweenScaleRef.current = new TWEEN.Tween(scaleRef.current)
+      tweenScaleRef.current = startManagedTween(new TWEEN.Tween(scaleRef.current)
         .to({ scale: scale.dataField1 }, scale.duration)
         .easing(scale.easing)
         .interpolation(scale.interpolation)
@@ -314,8 +329,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
           if (backgroundRef.current) {
             backgroundRef.current.style.setProperty('--scale', `${value.scale}`)
           }
-        })
-        .start()
+        }))
     }
   }, [scale])
 
@@ -328,14 +342,13 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         blinkTweenRef.current.stop()
       }
 
-      tweenHighlightRef.current = new TWEEN.Tween(highlightRef.current)
+      tweenHighlightRef.current = startManagedTween(new TWEEN.Tween(highlightRef.current)
         .to({ opacity: highlight.dataField1 }, highlight.duration)
         .easing(highlight.easing)
         .interpolation(highlight.interpolation)
         .onUpdate((value) => {
           backgroundRef.current?.style.setProperty('--visibility', `${value.opacity}`)
-        })
-        .start()
+        }))
     }
   }, [highlight])
 
@@ -345,14 +358,13 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         tweenVisibilityRef.current.stop()
       }
 
-      tweenVisibilityRef.current = new TWEEN.Tween(visibilityRef.current)
+      tweenVisibilityRef.current = startManagedTween(new TWEEN.Tween(visibilityRef.current)
         .to({ opacity: visibility.dataField1 }, visibility.duration)
         .easing(visibility.easing)
         .interpolation(visibility.interpolation)
         .onUpdate((value) => {
           frontRef.current?.style.setProperty('--visibility', `${value.opacity}`)
-        })
-        .start()
+        }))
     }
   }, [visibility])
 
@@ -431,7 +443,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         hangingRef.current?.style.setProperty('--hang-rotation', `${targetRestAngle}deg`) 
         animateHanging(targetRestAngle)
       } else {
-        tweenHangRotationRef.current = new TWEEN.Tween(hangRotationRef.current)
+        tweenHangRotationRef.current = startManagedTween(new TWEEN.Tween(hangRotationRef.current)
           .to({ rotation: targetAngle }, 1000)
           .easing(TWEEN.Easing.Quadratic.InOut)
           .onUpdate((value) => {
@@ -439,8 +451,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
           })
           .onComplete(() => {
             animateHanging(targetAngle)
-          })
-          .start()
+          }))
       }
     }
 
@@ -466,7 +477,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
           y: Array.from({ length: IDLE_LENGTH }, () => startRange + Math.random() * range)
         }
 
-        idleTweenRef.current = new TWEEN.Tween({ x: 0, y: 0 })
+        idleTweenRef.current = startManagedTween(new TWEEN.Tween({ x: 0, y: 0 })
           .to(newTarget, duration)
           .interpolation(TWEEN.Interpolation.CatmullRom)
           .easing(TWEEN.Easing.Sinusoidal.InOut)
@@ -480,8 +491,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
               backgroundElement.style.setProperty('--idle-translate-y', `${value.y}px`)
             }
           })
-          .onComplete(animateIdle)
-          .start()
+          .onComplete(animateIdle))
       }
 
       animateIdle()
@@ -508,7 +518,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
       const animateBlink = () => {
         if (!isBlinkingRef.current || isHoveringRef.current) return
 
-        blinkTweenRef.current = new TWEEN.Tween(highlightRef.current)
+        blinkTweenRef.current = startManagedTween(new TWEEN.Tween(highlightRef.current)
           .to({ opacity: highlightRef.current.opacity < 0.5 ? 1 : 0.2 }, duration)
           .easing(TWEEN.Easing.Quadratic.InOut)
           .onUpdate((value) => {
@@ -521,8 +531,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
             if (isBlinkingRef.current && !isHoveringRef.current) {
               animateBlink()
             }
-          })
-          .start()
+          }))
       }
 
       animateBlink()
@@ -582,7 +591,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         ? hangRotationRef.current.rotation - (Math.random() * 8 + 8)
         : hangRotationRef.current.rotation + (Math.random() * 8 + 8)
 
-      tweenHangRotationRef.current = new TWEEN.Tween(hangRotationRef.current)
+      tweenHangRotationRef.current = startManagedTween(new TWEEN.Tween(hangRotationRef.current)
         .to({ rotation: targetRotation }, 600)
         .easing(TWEEN.Easing.Quadratic.InOut)
         .onUpdate((value) => {
@@ -590,8 +599,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         })
         .onComplete(() => {
           playHanging()
-        })
-        .start()
+        }))
       lastHangingRotationInteractionTimeRef.current = Date.now()
     }
 
@@ -693,13 +701,13 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
               <div className='component-content' >
                 {props.childrenBehindFront}
               </div>
-              {props.frontImagePath && <img className='component-image NoMouse NoDrag' src={props.frontImagePath} alt="Component Front" />}
+              {props.frontImagePath && <img className='component-image NoMouse NoDrag' src={props.frontImagePath} alt="Component Front" loading="lazy" decoding="async" />}
               <div className='component-content' >
                 {props.childrenInFront}
               </div>
             </div>
             <div className="component-back-face NoMouse NoDrag">
-              {props.backgroundImagePath && <img className='component-image NoMouse NoDrag' src={props.backgroundImagePath} alt="Component Background" />}
+              {props.backgroundImagePath && <img className='component-image NoMouse NoDrag' src={props.backgroundImagePath} alt="Component Background" loading="lazy" decoding="async" />}
               <div className='component-content' >
                 {props.childrenInBack}
               </div>
@@ -746,5 +754,3 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
 })
 
 InteractibleComponent.displayName = 'InteractibleComponent'
-
-

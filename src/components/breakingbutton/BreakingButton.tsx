@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import styles from "./styles.module.scss";
 import { motion, useAnimation } from "framer-motion";
 
@@ -22,36 +22,12 @@ export const BreakingButton = forwardRef<BreakingButtonRef, BreakingButtonProps>
   const controlsTextBox = useAnimation();
   const controlsFlash = useAnimation();
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  function breakButton() {
-    controls.start(i => ({
-      x: brokenPieces[i].animation.x,
-      y: brokenPieces[i].animation.y,
-      rotate: brokenPieces[i].animation.rotate,
-      opacity: brokenPieces[i].animation.opacity,
-      transition: { duration: 1.3, times: [0, 0.1, 1], ease: ["circIn", "easeOut"] },
-    }));
-    controlsTextBox.start({
-      x: brokenPieces[0].animation.x,
-      y: brokenPieces[0].animation.y,
-      rotate: brokenPieces[0].animation.rotate,
-      opacity: brokenPieces[0].animation.opacity,
-      transition: { duration: 1.3, times: [0, 0.1, 1], ease: ["circIn", "easeOut"] },
-    });
-    controlsFlash.start(i => ({
-      x: brokenPieces[i].animation.x,
-      y: brokenPieces[i].animation.y,
-      rotate: brokenPieces[i].animation.rotate,
-      opacity: [0, 0.8, 0],
-      transition: { duration: 1.3, times: [0, 0.1, 1], ease: ["circIn", "easeOut"] },
-    }));
-  };
+  const fragmentPreloadRef = useRef<Promise<void> | null>(null);
+  const breakRequestedRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const [animationPhase, setAnimationPhase] = useState<'intact' | 'breaking' | 'broken'>('intact');
 
-  useImperativeHandle(ref, () => ({
-    breakButton,
-  }));
-
-  const brokenPieces = [
+  const brokenPieces = useMemo(() => [
     {
       className: styles.button_broken,
       src: "/images/buttonpieces/button_broken.svg",
@@ -234,18 +210,121 @@ export const BreakingButton = forwardRef<BreakingButtonRef, BreakingButtonProps>
       onHoverStart: () => controlsText.start({ scale: 1.07 }),
       onHoverEnd: () => controlsText.start({ scale: 1 })
     },
-  ];
+  ], [controlsText]);
+
+  const preloadFragments = useCallback(() => {
+    if (fragmentPreloadRef.current) return fragmentPreloadRef.current;
+
+    fragmentPreloadRef.current = Promise.all(
+      brokenPieces.slice(0, -1).map((piece) => new Promise<void>((resolve) => {
+        const image = new Image();
+        const finish = () => {
+          image.onload = null;
+          image.onerror = null;
+          resolve();
+        };
+
+        image.onload = () => {
+          if (typeof image.decode === 'function') {
+            void image.decode().then(finish, finish);
+          } else {
+            finish();
+          }
+        };
+        image.onerror = finish;
+        image.src = piece.src;
+      })),
+    ).then(() => undefined);
+
+    return fragmentPreloadRef.current;
+  }, [brokenPieces]);
+
+  const breakButton = useCallback(() => {
+    if (breakRequestedRef.current) return;
+    breakRequestedRef.current = true;
+
+    void preloadFragments().then(() => {
+      if (isMountedRef.current) setAnimationPhase('breaking');
+    });
+  }, [preloadFragments]);
+
+  useImperativeHandle(ref, () => ({
+    breakButton,
+  }), [breakButton]);
+
+  useEffect(() => {
+    void preloadFragments();
+  }, [preloadFragments]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (animationPhase !== 'breaking') return;
+
+    let isCurrent = true;
+    const transition = { duration: 1.3, times: [0, 0.1, 1], ease: ["circIn", "easeOut"] };
+
+    const animations = [
+      controls.start(i => ({
+        x: brokenPieces[i].animation.x,
+        y: brokenPieces[i].animation.y,
+        rotate: brokenPieces[i].animation.rotate,
+        opacity: brokenPieces[i].animation.opacity,
+        transition,
+      })),
+      controlsTextBox.start({
+        x: brokenPieces[0].animation.x,
+        y: brokenPieces[0].animation.y,
+        rotate: brokenPieces[0].animation.rotate,
+        opacity: brokenPieces[0].animation.opacity,
+        transition,
+      }),
+      controlsFlash.start(i => ({
+        x: brokenPieces[i].animation.x,
+        y: brokenPieces[i].animation.y,
+        rotate: brokenPieces[i].animation.rotate,
+        opacity: [0, 0.8, 0],
+        transition,
+      })),
+    ];
+
+    Promise.all(animations).then(() => {
+      if (isCurrent) setAnimationPhase('broken');
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [animationPhase, brokenPieces, controls, controlsFlash, controlsTextBox]);
+
+  useEffect(() => () => {
+    controls.stop();
+    controlsText.stop();
+    controlsTextBox.stop();
+    controlsFlash.stop();
+  }, [controls, controlsFlash, controlsText, controlsTextBox]);
+
+  const visiblePieces = animationPhase === 'intact'
+    ? brokenPieces.slice(-1)
+    : animationPhase === 'breaking'
+      ? brokenPieces
+      : brokenPieces.slice(0, -1);
 
   return (
     <div ref={containerRef} style={style} className={styles.container} onClick={onClick}>
-      {brokenPieces.map((piece, index) => (
+      {visiblePieces.map((piece, index) => (
         <motion.img
-          key={index}
+          key={piece.src}
           className={piece.className}
           src={piece.src}
           alt={piece.alt}
           animate={controls}
-          custom={index}
+          custom={animationPhase === 'intact' ? brokenPieces.length - 1 : index}
           whileHover={piece.hover}
           onHoverStart={piece.onHoverStart}
           onHoverEnd={piece.onHoverEnd}
@@ -257,12 +336,12 @@ export const BreakingButton = forwardRef<BreakingButtonRef, BreakingButtonProps>
       >
         <motion.h2 className="Black" style={{ fontSize: 'min(3.4vh, 6.4vmin)' }} animate={controlsText}>{title}</motion.h2>
       </motion.div>
-      {brokenPieces.slice(0, -1).map((piece, index) => (
+      {animationPhase === 'breaking' && brokenPieces.slice(0, -1).map((piece, index) => (
         <motion.img
-          key={100 + index}
+          key={`flash-${piece.src}`}
           className={piece.className}
           src={piece.src}
-          alt={`${piece.alt}_2`}
+          alt=""
           animate={controlsFlash}
           custom={index}
           style={{ filter: 'brightness(2) drop-shadow(0px 0px 10px #FFFF)', zIndex: 9, opacity: 0, pointerEvents: 'none' }}

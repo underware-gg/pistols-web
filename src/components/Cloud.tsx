@@ -1,217 +1,96 @@
-import { motion as m, useMotionValue, useAnimationFrame } from 'framer-motion';
+import type { CSSProperties } from 'react';
 import { Image } from 'semantic-ui-react';
-import { useEffect, useState } from 'react';
 
-const Cloud = ({
-  src,
-  startX,
-  endX,
-  yPositions,
-  duration,
-  delay = 0,
-  width = 500,
-  top = 0,
-  zIndex = 1,
-  opacity = 0.8
-}: {
-  src: string;
-  startX: any;
-  endX: string;
-  yPositions: number[];
-  duration: number;
-  delay: number;
-  width: any;
-  top: any;
-  zIndex: number;
-  opacity: number;
-}) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const z = useMotionValue(zIndex);
-  const startTime = useMotionValue<number | null>(null);
-  const cloudOpacity = useMotionValue(0);
-  
-  // Store dimensions in state to handle SSR
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [isInitialized, setIsInitialized] = useState(false);
-  
-  useEffect(() => {
-    // Update dimensions on client-side only
-    setDimensions({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-    
-    const handleResize = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  // Initialize animation values once dimensions are available
-  useEffect(() => {
-    if (dimensions.width > 0 && !isInitialized) {
-      setIsInitialized(true);
-      
-      // Parse startX to position cloud properly initially
-      const parsePosition = (pos: string | number, viewportWidth: number): number => {
-        if (typeof pos === 'number') return pos;
-        
-        const value = parseFloat(pos);
-        if (pos.includes('vw')) return (value / 100) * viewportWidth;
-        if (pos.includes('px')) return value;
-        return value;
-      };
-      
-      const startXValue = parsePosition(startX, dimensions.width);
-      x.set(startXValue);
-      
-      // Set initial opacity to 0
-      cloudOpacity.set(0);
-      
-      // Animate opacity from 0 to 0.85 over 1 second with easeOutCubic
-      const fadeInAnimation = () => {
-        const startTime = performance.now();
-        const duration = 1000; // 1 second
-        
-        const animateOpacity = (timestamp: number) => {
-          const elapsed = timestamp - startTime;
-          if (elapsed < duration) {
-            const progress = elapsed / duration;
-            // easeOutCubic
-            const easedProgress = 1 - Math.pow(1 - progress, 3);
-            cloudOpacity.set(easedProgress * opacity);
-            requestAnimationFrame(animateOpacity);
-          } else {
-            cloudOpacity.set(opacity);
-          }
-        };
-        
-        requestAnimationFrame(animateOpacity);
-      };
-      
-      // Start the fade-in animation after the delay
-      setTimeout(fadeInAnimation);
-    }
-  }, [dimensions, isInitialized, startX, x, delay]);
-  
-  // Convert duration from seconds to milliseconds
-  const durationMs = duration * 1000;
-  // Convert delay to milliseconds for initial offset
-  const initialElapsedMs = delay * durationMs;
-  
-  useAnimationFrame((t) => {
-    if (!isInitialized || dimensions.width === 0) return; // Skip if not initialized
-    
-    // Parse startX and endX to get numeric values
-    const parsePosition = (pos: string | number, viewportWidth: number): number => {
-      if (typeof pos === 'number') return pos;
-      
-      const value = parseFloat(pos);
-      if (pos.includes('vw')) return (value / 100) * viewportWidth;
-      if (pos.includes('px')) return value;
-      return value;
-    };
-    
-    const startXValue = parsePosition(startX, dimensions.width);
-    const endXValue = parsePosition(endX, dimensions.width);
-    
-    // Calculate total distance for X
-    const totalXDistance = endXValue - startXValue;
-    
-    if (startTime.get() === null) {
-      // Set start time with initial offset to simulate already elapsed time
-      startTime.set(t - initialElapsedMs);
-    }
-    
-    const elapsed = t - (startTime.get() || 0);
-    
-    const xProgress = (elapsed % durationMs) / durationMs;
-    
-    // Calculate current X position
-    const currentX = startXValue + xProgress * totalXDistance;
-    x.set(currentX);
-    
-    // Calculate current Y position (oscillating between yPositions)
-    if (yPositions.length > 0) {
-      const yProgress = (elapsed % durationMs) / durationMs;
-      const yIndex = Math.floor(yProgress * yPositions.length);
-      const nextYIndex = (yIndex + 1) % yPositions.length;
-      const ySubProgress = (yProgress * yPositions.length) % 1;
-      
-      const currentY = yPositions[yIndex] + 
-        (yPositions[nextYIndex] - yPositions[yIndex]) * ySubProgress;
-      
-      y.set(currentY);
-    }
-    
-    // Oscillate Z value slightly for depth effect
-    const zProgress = (elapsed % durationMs) / durationMs;
-    const zVariation = Math.sin(zProgress * Math.PI * 2) * 0.5;
-    z.set(zIndex + zVariation);
-  });
-  
-  return (
-    <m.div
-      className="NoTouch NoMouse NoDrag"
-      style={{
-        x,
-        y,
-        translateZ: z,
-        opacity: cloudOpacity,
-        width: width,
-        position: 'absolute',
-        top: top,
-        zIndex: zIndex
-      }}
-    >
-      <Image 
-        src={src}
-        alt="Cloud"
-        style={{ 
-          width: '100%', 
-          height: 'auto',
-          position: 'absolute',
-          top: '0'
-        }} 
-      />
-    </m.div>
-  );
+type Range = {
+  min: number;
+  max: number;
 };
 
-const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-const getRandomFloat = (min: number, max: number) => Math.random() * (max - min) + min;
-const getRandomViewHeight = (min: number, max: number) => `${getRandomInt(min, max)}vh`;
-const getRandomViewWidth = (min: number, max: number) => `${getRandomInt(min, max)}vw`;
+type CloudStyle = CSSProperties & {
+  '--cloud-duration': string;
+  '--cloud-delay': string;
+  '--cloud-opacity': number;
+  '--cloud-depth': string;
+  '--cloud-rest-x': string;
+  '--cloud-x-0': string;
+  '--cloud-x-1': string;
+  '--cloud-x-2': string;
+  '--cloud-x-3': string;
+  '--cloud-x-4': string;
+  '--cloud-x-5': string;
+  '--cloud-x-6': string;
+  '--cloud-y-0': string;
+  '--cloud-y-1': string;
+  '--cloud-y-2': string;
+  '--cloud-y-3': string;
+  '--cloud-y-4': string;
+  '--cloud-y-5': string;
+};
+
+type CloudProps = {
+  src: string;
+  style: CloudStyle;
+};
+
+const Cloud = ({ src, style }: CloudProps) => (
+  <div className="LandingCloud NoTouch NoMouse NoDrag" style={style} aria-hidden="true">
+    <Image className="LandingCloud__image" src={src} alt="" draggable={false} />
+  </div>
+);
+
+const getRandomInt = ({ min, max }: Range) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+const getRandomFloat = ({ min, max }: Range) =>
+  Math.random() * (max - min) + min;
+
+const getHorizontalPosition = (startXPx: number, progress: number) =>
+  `calc(${startXPx * (1 - progress)}px + ${progress * 100}vw)`;
 
 const generateCloudComponents = (
-  numClouds: number, 
-  durationRange: {min: number, max: number},
-  widthRange: {min: number, max: number},
-  topRange: {min: number, max: number},
-  zIndexRange: {min: number, max: number},
-  opacityRange: {min: number, max: number}
-) => {
-  return Array.from({ length: numClouds }, (_, index) => (
-    <Cloud
-      key={index}
-      src={`/images/cloud_${index % 3 + 1}.png`}
-      startX={`${-widthRange.max}px`}
-      endX='100vw'
-      yPositions={[0, getRandomInt(-50, 50), getRandomInt(-50, 50), getRandomInt(-50, 50), getRandomInt(-50, 50), getRandomInt(-50, 50)]}
-      duration={getRandomInt(durationRange.min, durationRange.max)}
-      delay={(index + getRandomInt(0, index)) / (getRandomInt(0, 100) / 100)}
-      width={`${getRandomInt(widthRange.min, widthRange.max)}px`}
-      top={getRandomViewHeight(topRange.min, topRange.max)}
-      zIndex={getRandomInt(zIndexRange.min, zIndexRange.max)}
-      opacity={getRandomFloat(opacityRange.min, opacityRange.max)}
-    />
-  ));
-};
+  numClouds: number,
+  durationRange: Range,
+  widthRange: Range,
+  topRange: Range,
+  zIndexRange: Range,
+  opacityRange: Range
+) => Array.from({ length: numClouds }, (_, index) => {
+  const duration = getRandomInt(durationRange);
+  const startX = -widthRange.max;
+  const zIndex = getRandomInt(zIndexRange);
+  const yPositions = Array.from({ length: 6 }, (_, yIndex) =>
+    yIndex === 0 ? 0 : getRandomInt({ min: -50, max: 50 })
+  );
+  const progressPoints = [0, 1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1];
+  const horizontalPositions = progressPoints.map((progress) =>
+    getHorizontalPosition(startX, progress)
+  );
+
+  const style: CloudStyle = {
+    '--cloud-duration': `${duration}s`,
+    '--cloud-delay': `${-getRandomFloat({ min: 0, max: duration })}s`,
+    '--cloud-opacity': getRandomFloat(opacityRange),
+    '--cloud-depth': `${zIndex}px`,
+    '--cloud-rest-x': `${getRandomInt({ min: -10, max: 90 })}vw`,
+    '--cloud-x-0': horizontalPositions[0],
+    '--cloud-x-1': horizontalPositions[1],
+    '--cloud-x-2': horizontalPositions[2],
+    '--cloud-x-3': horizontalPositions[3],
+    '--cloud-x-4': horizontalPositions[4],
+    '--cloud-x-5': horizontalPositions[5],
+    '--cloud-x-6': horizontalPositions[6],
+    '--cloud-y-0': `${yPositions[0]}px`,
+    '--cloud-y-1': `${yPositions[1]}px`,
+    '--cloud-y-2': `${yPositions[2]}px`,
+    '--cloud-y-3': `${yPositions[3]}px`,
+    '--cloud-y-4': `${yPositions[4]}px`,
+    '--cloud-y-5': `${yPositions[5]}px`,
+    width: `${getRandomInt(widthRange)}px`,
+    top: `${getRandomInt(topRange)}vh`,
+    zIndex
+  };
+
+  return <Cloud key={index} src={`/images/cloud_${index % 3 + 1}.png`} style={style} />;
+});
 
 export default generateCloudComponents;

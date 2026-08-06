@@ -1,142 +1,146 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { CSSProperties, useEffect, useRef } from 'react'
 import { Label } from 'semantic-ui-react'
-import { useGameEvent } from '../hooks/useGameEvent'
 
 interface MouseToolTipProps {
   text?: string | null;
 }
 
+type TooltipStyle = CSSProperties & {
+  '--tooltip-arrow-left': string;
+};
+
+const edgeMargin = 16;
+
 export function MouseToolTip({ text }: MouseToolTipProps) {
-  const { value: hoverSceneValue } = useGameEvent('hover_description', null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const labelRef = useRef<HTMLElement | null>(null);
-  const arrowRef = useRef<HTMLElement | null>(null);
-  const [mousePos, setMousePos] = useState<{clientX: number, clientY: number} | null>(null);
-  const [isBelow, setIsBelow] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const edgeMargin = 16;
-
-  const setLabelReference = (el: HTMLElement | null) => {
-    labelRef.current = el;
-    
-    if (el) {
-      setTimeout(() => {
-        const styleId = 'tooltip-arrow-style';
-        let styleElement = document.getElementById(styleId) as HTMLStyleElement;
-        
-        if (!styleElement) {
-          styleElement = document.createElement('style');
-          styleElement.id = styleId;
-          document.head.appendChild(styleElement);
-        }
-        
-        arrowRef.current = styleElement;
-      }, 0);
-    }
-  };
+  const labelRef = useRef<HTMLDivElement | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const schedulePositionRef = useRef<(() => void) | null>(null);
+  const displayText = text || null;
 
   useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+    const trackPointer = (event: MouseEvent) => {
+      lastPointerRef.current = { x: event.clientX, y: event.clientY };
+      schedulePositionRef.current?.();
     };
+
+    document.addEventListener('mousemove', trackPointer, { passive: true });
+    return () => document.removeEventListener('mousemove', trackPointer);
   }, []);
-  
-  useEffect(() => {
-    if (text !== null || hoverSceneValue !== null) {
-      setIsVisible(false);
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 30);
-      return () => clearTimeout(timer);
-    } else {
-      setIsVisible(false);
-    }
-  }, [text, hoverSceneValue]);
-  
-  useEffect(() => {
-    if (tooltipRef.current && mousePos) {
-      requestAnimationFrame(() => {
-        if (!tooltipRef.current) return;
-        
-        tooltipRef.current.style.opacity = isVisible ? '1' : '0';
-        
-        const tooltipWidth = tooltipRef.current.offsetWidth;
-        const tooltipHeight = tooltipRef.current.offsetHeight;
-        
-        if (!tooltipWidth || !tooltipHeight) return;
-        
-        const viewportWidth = window.innerWidth;
-        
-        let left = mousePos.clientX - (tooltipWidth / 2);
-        let top = mousePos.clientY - tooltipHeight - 10;
-        
-        let arrowLeft = 50;
-        
-        if (left < edgeMargin) {
-          arrowLeft = ((mousePos.clientX - edgeMargin) / tooltipWidth) * 100;
-          left = edgeMargin;
-        } else if (left + tooltipWidth > viewportWidth - edgeMargin) {
-          arrowLeft = ((mousePos.clientX - (viewportWidth - tooltipWidth - edgeMargin)) / tooltipWidth) * 100;
-          left = viewportWidth - tooltipWidth - edgeMargin;
-        }
-        
-        arrowLeft = Math.max(10, Math.min(90, arrowLeft));
-        
-        if (top < edgeMargin) {
-          top = mousePos.clientY + 15;
-          setIsBelow(true);
-        } else {
-          setIsBelow(false);
-        }
-        
-        tooltipRef.current.style.left = `${left}px`;
-        tooltipRef.current.style.top = `${top}px`;
-        
-        if (arrowRef.current) {
-          const direction = isBelow ? 'above' : 'below';
-          const cssRule = `#MouseToolTipAnchor .ui.${direction}.pointing.label:before { left: ${arrowLeft}% !important; }`;
-          (arrowRef.current as HTMLStyleElement).innerHTML = cssRule;
-        }
-      });
-    }
-  }, [hoverSceneValue, text, mousePos, isBelow, isVisible, edgeMargin]);
 
-  const handleMouseMove = (event: MouseEvent) => {
-    setMousePos({
-      clientX: event.clientX,
-      clientY: event.clientY
-    });
+  useEffect(() => {
+    const tooltip = tooltipRef.current;
+    if (!displayText || !tooltip) {
+      return;
+    }
+
+    let animationFrame: number | null = null;
+    let visibilityTimer: ReturnType<typeof setTimeout> | null = null;
+    let canShow = false;
+
+    const updatePosition = () => {
+      animationFrame = null;
+
+      const label = labelRef.current;
+      const pointer = lastPointerRef.current;
+      if (!label || !pointer) return;
+
+      const tooltipWidth = tooltip.offsetWidth;
+      const tooltipHeight = tooltip.offsetHeight;
+      if (!tooltipWidth || !tooltipHeight) return;
+
+      const viewportWidth = window.innerWidth;
+      let left = pointer.x - (tooltipWidth / 2);
+      let top = pointer.y - tooltipHeight - 10;
+      let arrowLeft = 50;
+
+      if (left < edgeMargin) {
+        arrowLeft = ((pointer.x - edgeMargin) / tooltipWidth) * 100;
+        left = edgeMargin;
+      } else if (left + tooltipWidth > viewportWidth - edgeMargin) {
+        arrowLeft = ((pointer.x - (viewportWidth - tooltipWidth - edgeMargin)) / tooltipWidth) * 100;
+        left = viewportWidth - tooltipWidth - edgeMargin;
+      }
+
+      arrowLeft = Math.max(10, Math.min(90, arrowLeft));
+
+      const isBelowPointer = top < edgeMargin;
+      if (isBelowPointer) {
+        top = pointer.y + 15;
+      }
+
+      const pointingDirection = isBelowPointer ? 'above' : 'below';
+      if (!label.classList.contains(pointingDirection)) {
+        label.className = label.className.replace(
+          /pointing (?:above|below)/,
+          `pointing ${pointingDirection}`,
+        );
+      }
+      tooltip.style.setProperty('--tooltip-arrow-left', `${arrowLeft}%`);
+      tooltip.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+      if (canShow) tooltip.style.opacity = '1';
+    };
+
+    const schedulePosition = () => {
+      if (animationFrame === null) {
+        animationFrame = requestAnimationFrame(updatePosition);
+      }
+    };
+
+    tooltip.style.opacity = '0';
+    schedulePositionRef.current = schedulePosition;
+    visibilityTimer = setTimeout(() => {
+      canShow = true;
+      schedulePosition();
+    }, 30);
+
+    if (lastPointerRef.current) {
+      schedulePosition();
+    }
+
+    return () => {
+      if (schedulePositionRef.current === schedulePosition) {
+        schedulePositionRef.current = null;
+      }
+      if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+      if (visibilityTimer !== null) clearTimeout(visibilityTimer);
+      tooltip.style.opacity = '0';
+    };
+  }, [displayText]);
+
+  const tooltipStyle: TooltipStyle = {
+    position: 'fixed',
+    pointerEvents: 'none',
+    zIndex: 9999,
+    opacity: 0,
+    transform: 'translate3d(0, 0, 0)',
+    willChange: displayText ? 'transform' : undefined,
+    '--tooltip-arrow-left': '50%',
   };
-
-  const displayText = text || hoverSceneValue;
 
   return (
     <>
-      <div 
-        ref={tooltipRef} 
-        id='MouseToolTipAnchor' 
+      <div
+        ref={tooltipRef}
+        id='MouseToolTipAnchor'
         className='Relative NoMouse NoDrag'
-        style={{
-          position: 'fixed',
-          pointerEvents: 'none',
-          zIndex: 9999,
-          opacity: 0,
-        }}
+        style={tooltipStyle}
       >
         {displayText && (
-          <Label 
-            pointing={isBelow ? 'above' : 'below'} 
-            style={{
-              position: 'relative',
-            }}
-            ref={setLabelReference}
+          <Label
+            pointing='below'
+            style={{ position: 'relative' }}
+            ref={labelRef}
           >
             <div dangerouslySetInnerHTML={{ __html: displayText }} />
           </Label>
         )}
       </div>
+      <style jsx global>{`
+        #MouseToolTipAnchor .ui.pointing.label::before {
+          left: var(--tooltip-arrow-left, 50%) !important;
+        }
+      `}</style>
     </>
   );
 }
