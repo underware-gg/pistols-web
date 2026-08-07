@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import { useEffect, useLayoutEffect, useRef } from 'react'
+import PageMetadata from '@/components/PageMetadata'
 import styles from '@/styles/discord.module.scss'
 
 // Run before paint on the client (so reveal hiding applies without a flash),
@@ -153,15 +154,12 @@ export default function Discord() {
 
   return (
     <>
+      <PageMetadata
+        title="Pistols at Dawn: Discord Bot"
+        description="Settle your disputes in Discord. A duelling game where honour is earned at ten paces."
+        canonicalUrl="https://pistols.gg/discord"
+      />
       <Head>
-        <title key="title">Pistols at Dawn: Discord Bot</title>
-        <meta
-          key="description"
-          name="description"
-          content="Settle your disputes in Discord. A duelling game where honour is earned at ten paces."
-        />
-        <link rel="canonical" href="https://pistols.gg/discord" />
-
         {/* Space Grotesk (used for headings, buttons, labels in this page) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -170,28 +168,6 @@ export default function Discord() {
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap"
         />
 
-        {/* Open Graph — page-specific title/description/url only.
-            og:image / twitter:image are intentionally NOT set here: the
-            site-wide default image in _document.tsx already provides one,
-            and next/head cannot dedupe against _document, so setting a
-            second image here makes Discord render a two-image gallery. */}
-        <meta key="og_type" property="og:type" content="website" />
-        <meta key="og_url" property="og:url" content="https://pistols.gg/discord" />
-        <meta key="og_title" property="og:title" content="Pistols at Dawn: Discord Bot" />
-        <meta
-          key="og_desc"
-          property="og:description"
-          content="Settle your disputes in Discord. A duelling game where honour is earned at ten paces."
-        />
-
-        {/* Twitter */}
-        <meta key="tw_card" name="twitter:card" content="summary_large_image" />
-        <meta key="tw_title" name="twitter:title" content="Pistols at Dawn: Discord Bot" />
-        <meta
-          key="tw_desc"
-          name="twitter:description"
-          content="Settle your disputes in Discord. A duelling game where honour is earned at ten paces."
-        />
       </Head>
 
       <main className={styles.page} ref={pageRef}>

@@ -1,8 +1,8 @@
-import App from "@/components/App";
 import { BreakingButton } from "@/components/breakingbutton/BreakingButton";
 import generateCloudComponents from "@/components/Cloud";
 import { DuelistSprite, type DuelistSpriteHandle } from "@/components/DuelistSprite";
 import { MouseToolTip } from "@/components/MouseToolTip";
+import PageMetadata from "@/components/PageMetadata";
 import ViewportVideo from "@/components/ViewportVideo";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
 import { smoothScrollToPercentage } from "@/utils/smoothScroll";
@@ -455,8 +455,14 @@ export default function Home() {
   }
   
   return (
-    <App>
-      <div style={{ backgroundColor: '#808080' }}>
+    <>
+      <PageMetadata
+        title="Pistols at Dawn"
+        description="10 paces, one shot. Whether you are duelling for honour or vengeance, be sure to put the bastard in the dirt. Made with love by Underware.gg"
+        canonicalUrl="https://pistols.gg"
+      />
+      <div className="App">
+        <div style={{ backgroundColor: '#808080' }}>
         {!hasEntered && <m.div id="overlay" className={disablePointer ? 'NoTouch NoMouse' : 'YesTouch YesMouse'}>
           <m.div 
             animate={overlayControls}
@@ -1542,6 +1548,7 @@ export default function Home() {
           <audio ref={breakSoundRef} src="/audio/sfx/pistol-shot.mp3"/>
         </div>
       </div>
-    </App>
+      </div>
+    </>
   )
 }
