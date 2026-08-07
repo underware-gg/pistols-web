@@ -801,8 +801,8 @@ export default function Home() {
         <div className="YesMouse YesTouch" style={{ position: 'relative', width: '100%', zIndex: 5, top: '200vh' }}>
           <div className="SpacerBottomTransparent"/>
           {/* About */}
-          <ParagraphWrapper 
-            id="About" 
+          <ParagraphWrapper
+            id="About"
             backgroundTilt="right"
             decorations={
               <>
@@ -1307,8 +1307,8 @@ export default function Home() {
           <div className="SpacerTopBottomTransparent"/>
 
           {/* Duelists */}
-          <ParagraphWrapper 
-            id="About" 
+          <ParagraphWrapper
+            id="Duelists"
             backgroundTilt="right"
             decorations={
               <>

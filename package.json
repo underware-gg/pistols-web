@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:all": "pnpm run typecheck && pnpm run test:coverage && pnpm run test:e2e"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -28,11 +34,19 @@
     "use-sound": "^5.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.3",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^8.57.1",
     "eslint-config-next": "13.5.6",
-    "typescript": "^5"
+    "jsdom": "^30.0.1",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }
