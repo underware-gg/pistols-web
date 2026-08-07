@@ -1,11 +1,14 @@
 import spriteMetadata from "../../public/images/duelist/sprites/metadata.json";
 import { motion as m, type HTMLMotionProps } from "framer-motion";
-import { forwardRef, useImperativeHandle, useRef } from "react";
+import NextImage from "next/image";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 type Duelist = "female" | "male";
 type DuelistAnimation = "idle" | "twosteps" | "shoot";
 
 type Atlas = (typeof spriteMetadata.atlases)[number];
+
+const atlasDecodes = new Map<string, Promise<void>>();
 
 export type DuelistSpriteProps = Omit<HTMLMotionProps<"div">, "children"> & {
   duelist: Duelist;
@@ -46,6 +49,43 @@ function getSpriteStyle(duelist: Duelist, animation: DuelistAnimation, frame: nu
   };
 }
 
+function getPosterSource(duelist: Duelist, animation: DuelistAnimation, frame: number) {
+  return `/images/duelist/${duelist}/${animation}/frame_${String(frame).padStart(3, '0')}.png`;
+}
+
+function decodeAtlas(source: string) {
+  const existingDecode = atlasDecodes.get(source);
+  if (existingDecode) return existingDecode;
+
+  const image = new Image();
+  const decode = image.decode?.bind(image);
+  const atlasDecode = decode
+    ? (() => {
+        image.src = source;
+        return decode().catch(() => undefined);
+      })()
+    : new Promise<void>((resolve) => {
+        image.addEventListener('load', () => resolve(), { once: true });
+        image.addEventListener('error', () => resolve(), { once: true });
+        image.src = source;
+      });
+
+  atlasDecodes.set(source, atlasDecode);
+  return atlasDecode;
+}
+
+/**
+ * Starts fetching and decoding selected atlases without changing the visible
+ * frame. Call this during a known lead time before an animation transition.
+ */
+export function preloadDuelistAnimations(animations: DuelistAnimation[]) {
+  return Promise.all(
+    spriteMetadata.atlases
+      .filter((atlas) => animations.includes(atlas.animation as DuelistAnimation))
+      .map((atlas) => decodeAtlas(atlas.src)),
+  );
+}
+
 /**
  * A motion-compatible, single-element duelist frame.
  *
@@ -58,19 +98,50 @@ export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>
 ) {
   const elementRef = useRef<HTMLDivElement>(null);
   const currentFrameRef = useRef({ animation: initialAnimation, frame: initialFrame });
+  const requestedFrameRef = useRef({ animation: initialAnimation, frame: initialFrame });
   const initialSprite = getSpriteStyle(duelist, initialAnimation, initialFrame);
+  const [isInitialAtlasReady, setIsInitialAtlasReady] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void decodeAtlas(initialSprite.atlas.src).then(() => {
+      if (isMounted) setIsInitialAtlasReady(true);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialSprite.atlas.src]);
 
   useImperativeHandle(ref, () => ({
     setFrame(animation, frame) {
       const element = elementRef.current;
       const sprite = getSpriteStyle(duelist, animation, frame);
       currentFrameRef.current = { animation, frame: sprite.selectedFrame.frame };
+      requestedFrameRef.current = { animation, frame: sprite.selectedFrame.frame };
       if (!element) return;
-      element.style.backgroundImage = sprite.style.backgroundImage;
-      element.style.backgroundPosition = sprite.style.backgroundPosition;
-      element.style.backgroundSize = sprite.style.backgroundSize;
-      element.dataset.animation = animation;
-      element.dataset.frame = String(sprite.selectedFrame.frame);
+
+      const applyFrame = (nextAnimation: DuelistAnimation, nextFrame: number) => {
+        const nextSprite = getSpriteStyle(duelist, nextAnimation, nextFrame);
+        element.style.backgroundImage = nextSprite.style.backgroundImage;
+        element.style.backgroundPosition = nextSprite.style.backgroundPosition;
+        element.style.backgroundSize = nextSprite.style.backgroundSize;
+        element.dataset.animation = nextAnimation;
+        element.dataset.frame = String(nextSprite.selectedFrame.frame);
+      };
+
+      const currentSource = element.style.backgroundImage;
+      if (currentSource.includes(sprite.atlas.src)) {
+        applyFrame(animation, sprite.selectedFrame.frame);
+        return;
+      }
+
+      void decodeAtlas(sprite.atlas.src).then(() => {
+        const requestedFrame = requestedFrameRef.current;
+        if (requestedFrame.animation !== animation) return;
+        applyFrame(requestedFrame.animation, requestedFrame.frame);
+      });
     },
     getElement: () => elementRef.current,
     getFrame: () => currentFrameRef.current,
@@ -86,6 +157,7 @@ export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>
       data-frame={initialSprite.selectedFrame.frame}
       style={{
         display: "inline-block",
+        position: "relative",
         width: "auto",
         aspectRatio: `${initialSprite.atlas.frame.width} / ${initialSprite.atlas.frame.height}`,
         backgroundImage: initialSprite.style.backgroundImage,
@@ -94,6 +166,27 @@ export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>
         backgroundSize: initialSprite.style.backgroundSize,
         ...style,
       }}
-    />
+    >
+      <NextImage
+        src={getPosterSource(duelist, initialAnimation, initialSprite.selectedFrame.frame)}
+        alt=""
+        aria-hidden="true"
+        width={initialSprite.atlas.frame.width}
+        height={initialSprite.atlas.frame.height}
+        loading="eager"
+        unoptimized
+        decoding="async"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          opacity: isInitialAtlasReady ? 0 : 1,
+          pointerEvents: "none",
+          transition: "opacity 100ms ease-out",
+        }}
+      />
+    </m.div>
   );
 });

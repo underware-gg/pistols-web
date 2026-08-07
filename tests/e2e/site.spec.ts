@@ -14,6 +14,31 @@ test.describe('Pistols at Dawn routes', () => {
     await expect(page.locator('#Duelists')).toHaveCount(1)
   })
 
+  test('a reload returns the landing page to the entry position', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+
+    await page.reload()
+
+    await expect(page.getByText('ENTER', { exact: true })).toBeVisible()
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+  })
+
+  test('the World Beyond the Tavern cards retain visible image areas', async ({ page }) => {
+    await page.goto('/')
+    const socials = page.locator('#Socials')
+    await socials.scrollIntoViewIfNeeded()
+
+    const cards = socials.locator('.social-card')
+    await expect(cards).toHaveCount(3)
+    for (const imageName of ['GitHub', 'Discord', 'X']) {
+      const image = socials.getByRole('img', { name: imageName })
+      await expect(image).toBeVisible()
+      await expect.poll(() => image.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThan(100)
+    }
+  })
+
   test('the Discord page exposes route-specific metadata and its primary action', async ({ page }) => {
     await page.goto('/discord')
 

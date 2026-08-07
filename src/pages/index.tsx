@@ -1,6 +1,6 @@
 import { BreakingButton } from "@/components/breakingbutton/BreakingButton";
 import generateCloudComponents from "@/components/Cloud";
-import { DuelistSprite, type DuelistSpriteHandle } from "@/components/DuelistSprite";
+import { DuelistSprite, preloadDuelistAnimations, type DuelistSpriteHandle } from "@/components/DuelistSprite";
 import { MouseToolTip } from "@/components/MouseToolTip";
 import PageMetadata from "@/components/PageMetadata";
 import ViewportVideo from "@/components/ViewportVideo";
@@ -68,19 +68,33 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Force instant scroll to top when page loads
-    if (typeof window !== 'undefined') {
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: 'instant'
-      });
+    // The entry prompt is a fresh-start experience. Keep browser restoration
+    // from leaving it over an unreachable, previously scrolled page.
+    const resetScrollPosition = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    };
 
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
-      document.documentElement.style.setProperty('--scrollbar-compensation', `${scrollbarWidth / 2}px`);
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
     }
+    resetScrollPosition();
+    window.addEventListener('pageshow', resetScrollPosition);
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+    document.documentElement.style.setProperty('--scrollbar-compensation', `${scrollbarWidth / 2}px`);
+
     setIsMuted(JSON.parse(localStorage.getItem('isMuted') ?? 'false') === true);
+
+    return () => {
+      window.removeEventListener('pageshow', resetScrollPosition);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Walking follows the entry animation almost immediately. Start its atlas
+    // off the critical rendering path so switching frames cannot blank a duelist.
+    void preloadDuelistAnimations(['twosteps']);
   }, []);
 
   useEffect(() => {
@@ -284,6 +298,7 @@ export default function Home() {
     if (isIdleRef.current && latest >= walkStart) {
       isIdleRef.current = false;
       setIsIdle(false);
+      void preloadDuelistAnimations(['shoot']);
       setDuelistFrame('twosteps', '001');
       return;
     }
@@ -950,8 +965,8 @@ export default function Home() {
                   onMouseLeave={() => setTooltipText(null)}
                   onClick={() => window.open('https://github.com/underware-gg/pistols', '_blank')}
                 >
-                  <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#112233' }}>
-                    <NextImage src="/images/socials_github.png" alt="GitHub" fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
+                  <div style={{ width: '100%', backgroundColor: '#112233' }}>
+                    <NextImage src="/images/socials_github.png" alt="GitHub" width={1024} height={1536} sizes="(max-width: 767px) 80vw, 26vw" style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
                   </div>
                   <div style={{ 
                     position: 'absolute',
@@ -978,8 +993,8 @@ export default function Home() {
                   onMouseLeave={() => setTooltipText(null)}
                   onClick={() => window.open(' https://discord.com/invite/realmsworld', '_blank')}
                 >
-                  <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#112233' }}>
-                    <NextImage src="/images/socials_discord.png" alt="Discord" fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
+                  <div style={{ width: '100%', backgroundColor: '#112233' }}>
+                    <NextImage src="/images/socials_discord.png" alt="Discord" width={1024} height={1536} sizes="(max-width: 767px) 80vw, 26vw" style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
                   </div>
                   <div style={{ 
                     position: 'absolute',
@@ -1006,8 +1021,8 @@ export default function Home() {
                   onMouseLeave={() => setTooltipText(null)}
                   onClick={() => window.open('https://x.com/pistols_gg', '_blank')}
                 >
-                  <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#112233' }}>
-                    <NextImage src="/images/socials_x.png" alt="X" fill sizes="(max-width: 767px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
+                  <div style={{ width: '100%', backgroundColor: '#112233' }}>
+                    <NextImage src="/images/socials_x.png" alt="X" width={1024} height={1536} sizes="(max-width: 767px) 80vw, 26vw" style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
                   </div>
                   <div style={{ 
                     position: 'absolute',
