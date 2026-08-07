@@ -1,7 +1,8 @@
-import Head from 'next/head'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import PageMetadata from '@/components/PageMetadata'
 import styles from '@/styles/discord.module.scss'
+
+/* eslint-disable @next/next/no-img-element -- This page's art uses CSS responsive sizing rather than Vercel image optimisation. */
 
 // Run before paint on the client (so reveal hiding applies without a flash),
 // but fall back to useEffect on the server to avoid Next's SSR warning.
@@ -159,17 +160,6 @@ export default function Discord() {
         description="Settle your disputes in Discord. A duelling game where honour is earned at ten paces."
         canonicalUrl="https://pistols.gg/discord"
       />
-      <Head>
-        {/* Space Grotesk (used for headings, buttons, labels in this page) */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap"
-        />
-
-      </Head>
-
       <main className={styles.page} ref={pageRef}>
         {/* ── HERO ─────────────────────────────────────────── */}
         <div className={styles.hero}>

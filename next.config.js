@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-   eslint: {
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+  eslint: {
     ignoreDuringBuilds: true,
   },
 }

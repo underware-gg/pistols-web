@@ -13,6 +13,8 @@ import NextImage from "next/image";
 import ParagraphWrapper from '../components/ParagraphWrapper';
 import SelectDuelistModal from "@/components/SelectDuelistModal";
 
+/* eslint-disable @next/next/no-img-element -- Animated controls and SVG partner marks retain their existing DOM and loading behaviour. */
+
 // The source frames are 2:1. Unlike <img>, the sprite <div> has no intrinsic
 // dimensions, so keep its responsive width and height paired explicitly.
 const duelistSpriteDimensions = {

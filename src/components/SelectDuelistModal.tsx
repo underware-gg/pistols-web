@@ -4,6 +4,8 @@ import { CARD_ASPECT_RATIO, DUELIST_CARD_HEIGHT, DUELIST_CARD_WIDTH } from './In
 import { DuelistCard, DuelistCardHandle } from './DuelistCard'
 import { useAspectSize } from '@/hooks/useAspectSize';
 
+/* eslint-disable @next/next/no-img-element -- Card overlays use CSS-controlled dimensions and stacking. */
+
 const HAND_CARD_WIDTH = 70
 const HAND_CARD_HEIGHT = HAND_CARD_WIDTH * (1080/1920)
 const CARDS_PER_PAGE = 5
@@ -110,7 +112,7 @@ export default function SelectDuelistModal() {
       // Update positions of other cards
       updateAllCardPositions(isHovered ? index : -1)
     }
-  }, [getCardPositioning, updateAllCardPositions, isAnimating])
+  }, [getCardPositioning, updateAllCardPositions])
 
   // Memoize the duelist cards to prevent unnecessary re-renders
   const duelistCardsMemo = useMemo(() => {

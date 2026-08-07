@@ -126,7 +126,21 @@ const InfiniteHorizontalScroll = ({
         );
       }
     });
-  }, [hasMounted, width, height]);
+  }, [
+    direction,
+    duration,
+    finalPosition,
+    hasMounted,
+    height,
+    imageHeight,
+    imageWidth,
+    images,
+    isContentCard,
+    oppositeFinalPosition,
+    startingPosition,
+    width,
+    xTranslation,
+  ]);
 
   useEffect(() => {
     let controls: any;
@@ -153,7 +167,17 @@ const InfiniteHorizontalScroll = ({
     }
 
     return () => controls?.stop();
-  }, [rerender, isHovering, width, height]);
+  }, [
+    duration,
+    finalPosition,
+    isHovering,
+    mustFinish,
+    rerender,
+    startingPosition,
+    width,
+    height,
+    xTranslation,
+  ]);
 
   const handleWheel = (event: any) => {
     if (Number.isNaN(xTranslation.get())) return

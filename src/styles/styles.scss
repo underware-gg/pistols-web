@@ -1,3 +1,5 @@
+@use 'sass:math';
+
 /* Font definitions */
 @font-face {
   font-family: 'Almendra';
@@ -513,10 +515,10 @@ TextArea::selection {
 
 .ParagraphBackground {
   --size-increase: calc(13% + (14% - 8%) * var(--random-factor-3, 0.5));
-  --random-factor-1: #{random()};
-  --random-factor-2: #{random()};
-  --random-factor-3: #{random()};
-  --random-factor-4: #{random()};
+  --random-factor-1: #{math.random()};
+  --random-factor-2: #{math.random()};
+  --random-factor-3: #{math.random()};
+  --random-factor-4: #{math.random()};
   --start-width: 100vw;
   --start-height: var(--content-height, 100vh);
   --min-offset: 2%;
@@ -969,18 +971,18 @@ TextArea::selection {
     --tilt-angle: calc(0.4deg + (0.8deg - 0.4deg) * var(--random-factor-1, 0.5));
     --additional-tilt: calc(-1 * (0.3deg + (0.6deg - 0.3deg) * var(--random-factor-2, 0.5)));
     --size-increase: calc(10% + (15% - 10%) * var(--random-factor-3, 0.5));
-    --random-factor-1: #{random()};
-    --random-factor-2: #{random()};
-    --random-factor-3: #{random()};
+    --random-factor-1: #{math.random()};
+    --random-factor-2: #{math.random()};
+    --random-factor-3: #{math.random()};
   }
   
   &.tilt-right {
     --tilt-angle: calc(-0.4deg + (-0.8deg - -0.4deg) * var(--random-factor-1, 0.5));
     --additional-tilt: calc(0.3deg + (0.6deg - 0.3deg) * var(--random-factor-2, 0.5));
     --size-increase: calc(12% + (20% - 12%) * var(--random-factor-3, 0.5)); /* Increased spacing between layers */
-    --random-factor-1: #{random()};
-    --random-factor-2: #{random()};
-    --random-factor-3: #{random()};
+    --random-factor-1: #{math.random()};
+    --random-factor-2: #{math.random()};
+    --random-factor-3: #{math.random()};
   }
 }
 
@@ -1027,18 +1029,18 @@ TextArea::selection {
     --tilt-angle: calc(0.4deg + (0.8deg - 0.4deg) * var(--random-factor-1, 0.5));
     --additional-tilt: calc(-1 * (0.3deg + (0.6deg - 0.3deg) * var(--random-factor-2, 0.5)));
     --size-increase: calc(10% + (15% - 10%) * var(--random-factor-3, 0.5));
-    --random-factor-1: #{random()};
-    --random-factor-2: #{random()};
-    --random-factor-3: #{random()};
+    --random-factor-1: #{math.random()};
+    --random-factor-2: #{math.random()};
+    --random-factor-3: #{math.random()};
   }
   
   &.tilt-right {
     --tilt-angle: calc(-0.4deg + (-0.8deg - -0.4deg) * var(--random-factor-1, 0.5));
     --additional-tilt: calc(0.3deg + (0.6deg - 0.3deg) * var(--random-factor-2, 0.5));
     --size-increase: calc(12% + (20% - 12%) * var(--random-factor-3, 0.5)); /* Increased spacing between layers */
-    --random-factor-1: #{random()};
-    --random-factor-2: #{random()};
-    --random-factor-3: #{random()};
+    --random-factor-1: #{math.random()};
+    --random-factor-2: #{math.random()};
+    --random-factor-3: #{math.random()};
   }
 }
 

@@ -3,6 +3,8 @@ import * as TWEEN from '@tweenjs/tween.js'
 import { useAspectSize } from '@/hooks/useAspectSize'
 import { startManagedTween } from '@/utils/tweenScheduler'
 
+/* eslint-disable @next/next/no-img-element -- Card faces participate in CSS 3D transforms. */
+
 export const CARD_WIDTH = 8.5 * 1.4
 export const CARD_HEIGHT = 12 * 1.4
 export const CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
@@ -94,6 +96,17 @@ export interface AnimationData {
 
 export const InteractibleComponent = forwardRef<InteractibleComponentHandle, InteractibleComponentProps>((props: InteractibleComponentProps, ref: React.Ref<InteractibleComponentHandle>) => {
   const { aspectWidth } = useAspectSize();
+  const {
+    defaultHighlightColor,
+    height,
+    isDraggable,
+    isHanging,
+    isHighlightable,
+    isSelected,
+    onClick,
+    onHover,
+    width,
+  } = props
 
   //TransformData
   const [spring, setSpring] = useState<AnimationData>({ dataField1: [], dataField2: [], duration: 0, easing: TWEEN.Easing.Quadratic.InOut, interpolation: TWEEN.Interpolation.Linear })
@@ -211,7 +224,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
       backgroundRef.current.style.setProperty('--component-width', `${props.width}px`)
       backgroundRef.current.style.setProperty('--component-height', `${props.height}px`)
     }
-  }, [props.width, props.height])
+  }, [props.width, props.height, randomOffset])
 
   useEffect(() => {
     if (frontRef.current) {
@@ -222,7 +235,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
       backgroundRef.current.style.setProperty('--component-border-radius', props.hasBorder ? `${props.width * 0.065}px` : '0px')
       backgroundRef.current.style.setProperty('--component-border-shadow', props.hasBorder ? `${aspectWidth(0.01)}px ${aspectWidth(0.01)}px ${aspectWidth(0.01)}px ${aspectWidth(0.01)}px rgba(20, 20, 20, 0.6)` : 'none')
     }
-  }, [props.hasBorder])
+  }, [aspectWidth, props.hasBorder, props.width])
 
   useEffect(() => {
     if (hangingNailRef.current) {
@@ -368,57 +381,11 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
     }
   }, [visibility])
 
-  useEffect(() => {
-    toggleVisibility((props.isVisible ?? false), props.instantVisible)
-  }, [props.isVisible, props.instantVisible])
-
-  useEffect(() => {
-    playHanging()
-  }, [props.isHanging])
-
-  useEffect(() => {
-    flipComponent(props.isFlipped, props.isLeft, props.instantFlip ? 0 : CARD_BASE_FLIP_DURATION)
-  }, [props.isFlipped, props.instantFlip])
-
-  useEffect(() => {
-    if (props.startPosition) {
-      setComponentPosition(props.startPosition?.x, props.startPosition?.y, 0)
-    }
-  }, [props.startPosition])
-
-  useEffect(() => {
-    if (props.startRotation) {
-      setComponentRotation(props.startRotation, 0)
-    }
-  }, [props.startRotation])
-
-  useEffect(() => {
-    if (props.startScale) {
-      setComponentScale(props.startScale, 0)
-    }
-  }, [props.startScale])
-
-  useEffect(() => {
-    if (props.startZIndex) {
-      setComponentZIndex(props.startZIndex)
-    }
-  }, [props.startZIndex])
-
-  useEffect(() => {
-    if (!hangingRef.current) return
-    if (props.isHanging) {
-      hangingRef.current.style.setProperty('--hang-rotation', `${hangRotationRef.current.rotation}deg`)
-    } else if (!props.isHanging) {
-      hangRotationRef.current.rotation = 0
-      hangingRef.current.style.setProperty('--hang-rotation', '0deg')
-    }
-  }, [props.isHanging])
-
   const toggleDefeated = (isDefeated: boolean) => {
     setIsDefeated(isDefeated)
   }
 
-  const playHanging = () => {
+  const playHanging = useCallback(() => {
     if (!props.isHanging) return
 
     const animateHanging = (startAngle: number) => {
@@ -456,7 +423,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
     }
 
     animateHanging(hangRotationRef.current.rotation)
-  }
+  }, [props.isHanging, props.shouldSwing, targetRestAngle])
 
   const toggleIdle = (isPlayingIdle: boolean) => {
     const innerElement = frontRef.current?.querySelector('.component-inner') as HTMLElement
@@ -507,7 +474,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
     }
   }
 
-  const toggleBlink = (isBlinking: boolean, duration = 750) => {
+  const toggleBlink = useCallback((isBlinking: boolean, duration = 750) => {
     if (blinkTweenRef.current) {
       blinkTweenRef.current.stop()
     }
@@ -536,7 +503,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
 
       animateBlink()
     }
-  }
+  }, [])
 
   const setComponentPosition = (x: number[] | number, y: number[] | number, duration = CARD_BASE_POSITION_DURATION, easing = TWEEN.Easing.Quadratic.InOut, interpolation = TWEEN.Interpolation.Linear) => {
     setSpring({ dataField1: Array.isArray(x) ? x : [x], dataField2: Array.isArray(y) ? y : [y], duration: duration, easing: easing, interpolation: interpolation })
@@ -557,28 +524,28 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
     }
   }
 
-  const flipComponent = (flipped = false, isLeft = false, duration = CARD_BASE_FLIP_DURATION, degrees = CARD_FLIP_ROTATION, easing = TWEEN.Easing.Quadratic.InOut, interpolation = TWEEN.Interpolation.Linear) => {
+  const flipComponent = useCallback((flipped = false, isLeft = false, duration = CARD_BASE_FLIP_DURATION, degrees = CARD_FLIP_ROTATION, easing = TWEEN.Easing.Quadratic.InOut, interpolation = TWEEN.Interpolation.Linear) => {
     setFlipRotation({ dataField1: [flipped ? (isLeft ? degrees : -degrees) : 0], duration: duration, easing: easing, interpolation: interpolation })
-  }
+  }, [])
 
-  const toggleHighlight = (isHighlighted: boolean, shouldBeWhite?: boolean, color?: string)  => {
+  const toggleHighlight = useCallback((isHighlighted: boolean, shouldBeWhite?: boolean, color?: string)  => {
     if (!backgroundRef.current) return
     if (visibilityRef.current.opacity == 0) return
     if (isHighlighted) {
-      backgroundRef.current.style.setProperty('--background-color', color ? color : (shouldBeWhite ? 'white' : props.defaultHighlightColor || 'white'))
+      backgroundRef.current.style.setProperty('--background-color', color ? color : (shouldBeWhite ? 'white' : defaultHighlightColor || 'white'))
     }
     setHighlight({ dataField1: [isHighlighted ? 1 : 0], duration: CARD_BASE_HIGHLIGHT_DURATION, easing: TWEEN.Easing.Quadratic.InOut, interpolation: TWEEN.Interpolation.Linear })
-  }
+  }, [defaultHighlightColor])
 
-  const toggleVisibility = (isVisible: boolean, instant?: boolean)  => {
+  const toggleVisibility = useCallback((isVisible: boolean, instant?: boolean)  => {
     setVisibility({ dataField1: [isVisible ? 1 : 0], duration: instant ? 0 : CARD_BASE_VISIBILITY_DURATION, easing: TWEEN.Easing.Quadratic.InOut, interpolation: TWEEN.Interpolation.Linear })
-  }
+  }, [])
 
-  const handleMouseEnter = (e: React.MouseEvent) => {
+  const handleMouseEnter = useCallback((e: React.MouseEvent) => {
     if (isDragging) return
     isHoveringRef.current = true
 
-     if (props.isHanging && Date.now() - lastHangingRotationInteractionTimeRef.current > 2000) {
+     if (isHanging && Date.now() - lastHangingRotationInteractionTimeRef.current > 2000) {
       const componentRect = frontRef.current?.getBoundingClientRect()
       if (!componentRect) return
       const componentCenterX = componentRect.left + componentRect.width / 2
@@ -603,22 +570,22 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
       lastHangingRotationInteractionTimeRef.current = Date.now()
     }
 
-    if (props.isHighlightable) toggleHighlight(true)
-    props.onHover && props.onHover(true)
-  }
+    if (isHighlightable) toggleHighlight(true)
+    onHover?.(true)
+  }, [isDragging, isHanging, isHighlightable, onHover, playHanging, toggleHighlight])
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (isDragging) return
     isHoveringRef.current = false
-    if (props.isHighlightable && !props.isSelected) {
+    if (isHighlightable && !isSelected) {
       if (isBlinkingRef.current) {
         toggleBlink(true)
       } else {
         toggleHighlight(false)
       }
     }
-    props.onHover && props.onHover(false)
-  }
+    onHover?.(false)
+  }, [isDragging, isHighlightable, isSelected, onHover, toggleBlink, toggleHighlight])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const startX = e.clientX - springRef.current.x
@@ -641,7 +608,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
       const deltaX = Math.abs(startClientX - e.clientX)
       const deltaY = Math.abs(startClientY - e.clientY)
 
-      if ((deltaX > 10 || deltaY > 10) && !mouseMove && props.isDraggable) {
+      if ((deltaX > 10 || deltaY > 10) && !mouseMove && isDraggable) {
         mouseMove = true
         setIsDragging(true)
         setComponentRotation(0)
@@ -649,8 +616,8 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
       }
 
       if (mouseMove) {
-        const limitedX = Math.max((-window.innerWidth / 2) + (props.width / 2), Math.min(newX, (window.innerWidth / 2) - (props.width / 2)))
-        const limitedY = Math.max((-window.innerHeight / 2) + (props.height / 2), Math.min(newY, (window.innerHeight / 2) - (props.height / 2)))
+        const limitedX = Math.max((-window.innerWidth / 2) + (width / 2), Math.min(newX, (window.innerWidth / 2) - (width / 2)))
+        const limitedY = Math.max((-window.innerHeight / 2) + (height / 2), Math.min(newY, (window.innerHeight / 2) - (height / 2)))
 
         setSpring({ dataField1: [limitedX], dataField2: [limitedY], duration: 0, easing: TWEEN.Easing.Quadratic.InOut })
       }
@@ -664,7 +631,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
       setIsDragging(false)
 
       if (endTime - startTime < 150 && !mouseMove) {
-        props.onClick && props.onClick(e)
+        onClick?.(e)
       } else if (mouseMove) {
         setComponentPosition(oldPositionX, oldPositionY, CARD_POSITION_RESET_DURATION)
         setRotation(startRotation)
@@ -676,7 +643,53 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
 
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-  }, [props.isDraggable, spring, props.width, props.height, scale, rotation, props.onClick])
+  }, [handleMouseLeave, height, isDraggable, onClick, rotation, scale, width])
+
+  useEffect(() => {
+    toggleVisibility((props.isVisible ?? false), props.instantVisible)
+  }, [props.isVisible, props.instantVisible, toggleVisibility])
+
+  useEffect(() => {
+    playHanging()
+  }, [playHanging])
+
+  useEffect(() => {
+    flipComponent(props.isFlipped, props.isLeft, props.instantFlip ? 0 : CARD_BASE_FLIP_DURATION)
+  }, [flipComponent, props.isFlipped, props.isLeft, props.instantFlip])
+
+  useEffect(() => {
+    if (props.startPosition) {
+      setComponentPosition(props.startPosition.x, props.startPosition.y, 0)
+    }
+  }, [props.startPosition])
+
+  useEffect(() => {
+    if (props.startRotation) {
+      setComponentRotation(props.startRotation, 0)
+    }
+  }, [props.startRotation])
+
+  useEffect(() => {
+    if (props.startScale) {
+      setComponentScale(props.startScale, 0)
+    }
+  }, [props.startScale])
+
+  useEffect(() => {
+    if (props.startZIndex) {
+      setComponentZIndex(props.startZIndex)
+    }
+  }, [props.startZIndex])
+
+  useEffect(() => {
+    if (!hangingRef.current) return
+    if (props.isHanging) {
+      hangingRef.current.style.setProperty('--hang-rotation', `${hangRotationRef.current.rotation}deg`)
+    } else {
+      hangRotationRef.current.rotation = 0
+      hangingRef.current.style.setProperty('--hang-rotation', '0deg')
+    }
+  }, [props.isHanging])
 
   
   const component = useMemo(() => {
@@ -716,7 +729,21 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         </div>
       </>
     )
-  }, [props.isDisabled, props.isSelected, isDefeated, props.frontImagePath, props.backgroundImagePath, props.childrenBehindFront, props.childrenInFront, props.childrenInBack])
+  }, [
+    handleMouseDown,
+    handleMouseEnter,
+    handleMouseLeave,
+    isDefeated,
+    props.backgroundImagePath,
+    props.childrenBehindFront,
+    props.childrenInBack,
+    props.childrenInFront,
+    props.frontImagePath,
+    props.isDisabled,
+    props.isSelected,
+    props.isVisible,
+    props.mouseDisabled,
+  ])
 
   const hangingNail = useMemo(() => {
     return (
@@ -748,7 +775,7 @@ export const InteractibleComponent = forwardRef<InteractibleComponentHandle, Int
         </div>
       </div>
     )
-  }, [props.width, props.height, randomOffset, component])
+  }, [aspectWidth, props.width, props.height, randomOffset, component])
 
   return props.isHanging ? hangingNail : component
 })

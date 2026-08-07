@@ -27,7 +27,7 @@ const Carditem = ({
       setAspectRatio(ratio);
     };
     img.src = image;
-  }, []);
+  }, [image]);
 
   return (
     <motion.div
