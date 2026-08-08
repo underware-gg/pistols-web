@@ -1,7 +1,7 @@
 import spriteMetadata from "../../public/images/duelist/sprites/metadata.json";
 import { motion as m, type HTMLMotionProps } from "framer-motion";
 import NextImage from "next/image";
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 type Duelist = "female" | "male";
 type DuelistAnimation = "idle" | "twosteps" | "shoot";
@@ -33,24 +33,13 @@ function resolveFrame(atlas: Atlas, frame: number) {
   return atlas.frames.find((candidate) => candidate.frame === frame) ?? atlas.frames[0];
 }
 
-function getSpriteStyle(duelist: Duelist, animation: DuelistAnimation, frame: number) {
+function getSprite(duelist: Duelist, animation: DuelistAnimation, frame: number) {
   const atlas = findAtlas(duelist, animation);
-  const selectedFrame = resolveFrame(atlas, frame);
-  const positionX = atlas.atlas.columns === 1 ? 0 : (selectedFrame.column / (atlas.atlas.columns - 1)) * 100;
-  const positionY = atlas.atlas.rows === 1 ? 0 : (selectedFrame.row / (atlas.atlas.rows - 1)) * 100;
-  return {
-    atlas,
-    selectedFrame,
-    style: {
-      backgroundImage: `url(${atlas.src})`,
-      backgroundPosition: `${positionX}% ${positionY}%`,
-      backgroundSize: `${atlas.atlas.columns * 100}% ${atlas.atlas.rows * 100}%`,
-    },
-  };
+  return { atlas, selectedFrame: resolveFrame(atlas, frame) };
 }
 
 function getPosterSource(duelist: Duelist, animation: DuelistAnimation, frame: number) {
-  return `/images/duelist/${duelist}/${animation}/frame_${String(frame).padStart(3, '0')}.png`;
+  return `/images/duelist/${duelist}/${animation}/frame_${String(frame).padStart(3, "0")}.png`;
 }
 
 function prepareAtlas(source: string) {
@@ -59,8 +48,8 @@ function prepareAtlas(source: string) {
 
   const image = new Image();
   const loaded = new Promise<boolean>((resolve) => {
-    image.addEventListener('load', () => resolve(true), { once: true });
-    image.addEventListener('error', () => resolve(false), { once: true });
+    image.addEventListener("load", () => resolve(true), { once: true });
+    image.addEventListener("error", () => resolve(false), { once: true });
   });
 
   image.src = source;
@@ -75,18 +64,48 @@ function prepareAtlas(source: string) {
   return readiness;
 }
 
-function waitForPaintBoundary() {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => resolve());
-    });
+function decodeImage(image: HTMLImageElement) {
+  return image.decode ? image.decode().then(() => true, () => false) : Promise.resolve(true);
+}
+
+function loadRenderedAtlas(image: HTMLImageElement, source: string) {
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+
+    const finish = (didLoad: boolean) => {
+      if (settled) return;
+      settled = true;
+      image.removeEventListener("load", handleLoad);
+      image.removeEventListener("error", handleError);
+      if (!didLoad) {
+        resolve(false);
+        return;
+      }
+      void decodeImage(image).then(resolve);
+    };
+    const handleLoad = () => finish(true);
+    const handleError = () => finish(false);
+
+    image.addEventListener("load", handleLoad);
+    image.addEventListener("error", handleError);
+    const hasFailedSource = image.getAttribute("src") === source && image.complete && image.naturalWidth === 0;
+    if (image.getAttribute("src") !== source || hasFailedSource) {
+      // Reassign a broken complete image so a later transition can retry it.
+      if (hasFailedSource) image.removeAttribute("src");
+      image.src = source;
+    }
+
+    if (image.complete && image.naturalWidth > 0) finish(true);
   });
 }
 
-/**
- * Starts fetching and decoding selected atlases without changing the visible
- * frame. Call this during a known lead time before an animation transition.
- */
+function positionAtlasFrame(image: HTMLImageElement, atlas: Atlas, column: number, row: number) {
+  image.style.width = `${atlas.atlas.columns * 100}%`;
+  image.style.height = `${atlas.atlas.rows * 100}%`;
+  image.style.transform = `translate3d(-${(column / atlas.atlas.columns) * 100}%, -${(row / atlas.atlas.rows) * 100}%, 0)`;
+}
+
+/** Starts fetching and decoding selected atlases without changing the visible frame. */
 export function preloadDuelistAnimations(animations: DuelistAnimation[]) {
   return Promise.all(
     spriteMetadata.atlases
@@ -96,68 +115,127 @@ export function preloadDuelistAnimations(animations: DuelistAnimation[]) {
 }
 
 /**
- * A motion-compatible, single-element duelist frame.
- *
- * The parent controls animation timing and merely updates `frame`, matching the
- * existing scroll-driven frame-selection rules without assigning image sources.
+ * Displays atlas frames without replacing an image on every animation tick.
+ * Two rendered atlas layers make animation changes atomic: the old layer stays
+ * visible until the incoming layer itself has loaded and decoded.
  */
 export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>(function DuelistSprite(
   { duelist, initialAnimation, initialFrame, alt, style, ...motionProps },
   ref,
 ) {
   const elementRef = useRef<HTMLDivElement>(null);
+  const atlasImageRefs = useRef<Array<HTMLImageElement | null>>([null, null]);
+  const activeSlotRef = useRef(0);
+  const activeAtlasSourceRef = useRef(findAtlas(duelist, initialAnimation).src);
+  const pendingAtlasSourceRef = useRef<string | null>(null);
+  const requestVersionRef = useRef(0);
   const currentFrameRef = useRef({ animation: initialAnimation, frame: initialFrame });
   const requestedFrameRef = useRef({ animation: initialAnimation, frame: initialFrame });
-  const initialSprite = getSpriteStyle(duelist, initialAnimation, initialFrame);
+  const initialSprite = getSprite(duelist, initialAnimation, initialFrame);
   const [isInitialAtlasReady, setIsInitialAtlasReady] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    const image = atlasImageRefs.current[0];
+    if (!image) return;
 
-    void prepareAtlas(initialSprite.atlas.src).then(async (isReady) => {
-      if (!isReady || !isMounted) return;
-      await waitForPaintBoundary();
-      if (isMounted) setIsInitialAtlasReady(true);
+    let isMounted = true;
+    const expectedSource = findAtlas(duelist, initialAnimation).src;
+    void loadRenderedAtlas(image, expectedSource).then((isReady) => {
+      if (isMounted && isReady && image.getAttribute("src") === expectedSource) {
+        setIsInitialAtlasReady(true);
+      }
     });
 
     return () => {
       isMounted = false;
     };
-  }, [initialSprite.atlas.src]);
+  }, [duelist, initialAnimation]);
+
+  const applyFrame = useCallback((
+    image: HTMLImageElement,
+    animation: DuelistAnimation,
+    frame: number,
+  ) => {
+    const sprite = getSprite(duelist, animation, frame);
+    positionAtlasFrame(image, sprite.atlas, sprite.selectedFrame.column, sprite.selectedFrame.row);
+    const element = elementRef.current;
+    if (element) {
+      element.dataset.animation = animation;
+      element.dataset.frame = String(sprite.selectedFrame.frame);
+    }
+    currentFrameRef.current = { animation, frame: sprite.selectedFrame.frame };
+  }, [duelist]);
 
   useImperativeHandle(ref, () => ({
     setFrame(animation, frame) {
-      const element = elementRef.current;
-      const sprite = getSpriteStyle(duelist, animation, frame);
-      currentFrameRef.current = { animation, frame: sprite.selectedFrame.frame };
+      const sprite = getSprite(duelist, animation, frame);
       requestedFrameRef.current = { animation, frame: sprite.selectedFrame.frame };
-      if (!element) return;
+      const activeImage = atlasImageRefs.current[activeSlotRef.current];
+      if (!activeImage) return;
 
-      const applyFrame = (nextAnimation: DuelistAnimation, nextFrame: number) => {
-        const nextSprite = getSpriteStyle(duelist, nextAnimation, nextFrame);
-        element.style.backgroundImage = nextSprite.style.backgroundImage;
-        element.style.backgroundPosition = nextSprite.style.backgroundPosition;
-        element.style.backgroundSize = nextSprite.style.backgroundSize;
-        element.dataset.animation = nextAnimation;
-        element.dataset.frame = String(nextSprite.selectedFrame.frame);
-      };
-
-      const currentSource = element.style.backgroundImage;
-      if (currentSource.includes(sprite.atlas.src)) {
-        applyFrame(animation, sprite.selectedFrame.frame);
+      if (activeAtlasSourceRef.current === sprite.atlas.src) {
+        requestVersionRef.current += 1;
+        pendingAtlasSourceRef.current = null;
+        const stagingImage = atlasImageRefs.current[1 - activeSlotRef.current];
+        if (stagingImage) stagingImage.style.opacity = "0";
+        applyFrame(activeImage, animation, sprite.selectedFrame.frame);
         return;
       }
 
-      void prepareAtlas(sprite.atlas.src).then((isReady) => {
-        if (!isReady) return;
+      if (pendingAtlasSourceRef.current === sprite.atlas.src) return;
+
+      const stagingSlot = 1 - activeSlotRef.current;
+      const stagingImage = atlasImageRefs.current[stagingSlot];
+      if (!stagingImage) return;
+
+      const requestVersion = requestVersionRef.current + 1;
+      requestVersionRef.current = requestVersion;
+      pendingAtlasSourceRef.current = sprite.atlas.src;
+      stagingImage.style.opacity = "0";
+      positionAtlasFrame(stagingImage, sprite.atlas, sprite.selectedFrame.column, sprite.selectedFrame.row);
+
+      void loadRenderedAtlas(stagingImage, sprite.atlas.src).then((isReady) => {
+        if (requestVersionRef.current !== requestVersion) return;
+        if (!isReady) {
+          pendingAtlasSourceRef.current = null;
+          return;
+        }
+
         const requestedFrame = requestedFrameRef.current;
-        if (requestedFrame.animation !== animation) return;
-        applyFrame(requestedFrame.animation, requestedFrame.frame);
+        const requestedSprite = getSprite(duelist, requestedFrame.animation, requestedFrame.frame);
+        if (requestedSprite.atlas.src !== sprite.atlas.src) return;
+
+        positionAtlasFrame(
+          stagingImage,
+          requestedSprite.atlas,
+          requestedSprite.selectedFrame.column,
+          requestedSprite.selectedFrame.row,
+        );
+        stagingImage.style.opacity = "1";
+        activeImage.style.opacity = "0";
+        stagingImage.dataset.duelistAtlasLayer = "active";
+        activeImage.dataset.duelistAtlasLayer = "staging";
+        activeSlotRef.current = stagingSlot;
+        activeAtlasSourceRef.current = sprite.atlas.src;
+        pendingAtlasSourceRef.current = null;
+        applyFrame(stagingImage, requestedFrame.animation, requestedSprite.selectedFrame.frame);
+        setIsInitialAtlasReady(true);
+
+        const retiredSource = activeImage.getAttribute("src");
+        requestAnimationFrame(() => {
+          if (
+            activeSlotRef.current !== 1 - stagingSlot
+            && activeImage.style.opacity === "0"
+            && activeImage.getAttribute("src") === retiredSource
+          ) {
+            activeImage.removeAttribute("src");
+          }
+        });
       });
     },
     getElement: () => elementRef.current,
     getFrame: () => currentFrameRef.current,
-  }), [duelist]);
+  }), [applyFrame, duelist]);
 
   return (
     <m.div
@@ -170,15 +248,40 @@ export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>
       style={{
         display: "inline-block",
         position: "relative",
+        overflow: "hidden",
         width: "auto",
         aspectRatio: `${initialSprite.atlas.frame.width} / ${initialSprite.atlas.frame.height}`,
-        backgroundImage: initialSprite.style.backgroundImage,
-        backgroundPosition: initialSprite.style.backgroundPosition,
-        backgroundRepeat: "no-repeat",
-        backgroundSize: initialSprite.style.backgroundSize,
         ...style,
       }}
     >
+      {[0, 1].map((slot) => (
+        // eslint-disable-next-line @next/next/no-img-element -- A rendered native image is required to make atlas readiness and handoff atomic.
+        <img
+          key={slot}
+          ref={(image) => { atlasImageRefs.current[slot] = image; }}
+          src={slot === 0 ? initialSprite.atlas.src : undefined}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          draggable={false}
+          data-duelist-atlas-layer={slot === 0 ? "active" : "staging"}
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "block",
+            maxWidth: "none",
+            objectFit: "fill",
+            pointerEvents: "none",
+            opacity: slot === 0 ? 1 : 0,
+            willChange: "transform",
+            ...(slot === 0 ? {
+              width: `${initialSprite.atlas.atlas.columns * 100}%`,
+              height: `${initialSprite.atlas.atlas.rows * 100}%`,
+              transform: `translate3d(-${(initialSprite.selectedFrame.column / initialSprite.atlas.atlas.columns) * 100}%, -${(initialSprite.selectedFrame.row / initialSprite.atlas.atlas.rows) * 100}%, 0)`,
+            } : undefined),
+          }}
+        />
+      ))}
       <NextImage
         src={getPosterSource(duelist, initialAnimation, initialSprite.selectedFrame.frame)}
         alt=""
@@ -188,6 +291,7 @@ export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>
         loading="eager"
         unoptimized
         decoding="async"
+        data-duelist-poster
         style={{
           position: "absolute",
           inset: 0,

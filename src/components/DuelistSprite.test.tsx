@@ -1,117 +1,151 @@
-import { act, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { createRef } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DuelistSprite, type DuelistSpriteHandle } from './DuelistSprite'
 
-function installControlledImage() {
-  const resolveDecodes = new Map<string, () => void>()
-  const resolveLoads = new Map<string, () => void>()
+function installControlledDecode() {
+  const resolveDecodes = new Map<HTMLImageElement, () => void>()
 
-  class ControlledImage extends EventTarget {
-    private source = ''
+  vi.mocked(HTMLImageElement.prototype.decode).mockImplementation(function decode(this: HTMLImageElement) {
+    return new Promise<void>((resolve) => {
+      resolveDecodes.set(this, resolve)
+    })
+  })
 
-    set src(source: string) {
-      this.source = source
-      resolveLoads.set(source, () => this.dispatchEvent(new Event('load')))
-    }
-
-    decode() {
-      return new Promise<void>((resolve) => {
-        resolveDecodes.set(this.source, resolve)
-      })
-    }
-  }
-
-  globalThis.Image = ControlledImage as unknown as typeof Image
   return {
-    resolveDecode: (source: string) => resolveDecodes.get(source)?.(),
-    resolveLoad: (source: string) => resolveLoads.get(source)?.(),
+    resolveDecode: (image: HTMLImageElement) => resolveDecodes.get(image)?.(),
   }
 }
 
 describe('DuelistSprite', () => {
-  const originalImage = globalThis.Image
-
   beforeEach(() => {
-    class ImmediatelyDecodedImage extends EventTarget {
-      set src(_source: string) {
-        queueMicrotask(() => this.dispatchEvent(new Event('load')))
-      }
-
-      decode() {
-        return Promise.resolve()
-      }
-    }
-
-    globalThis.Image = ImmediatelyDecodedImage as unknown as typeof Image
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      callback(performance.now())
-      return 1
+    Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(undefined),
     })
   })
 
   afterEach(() => {
-    globalThis.Image = originalImage
-    vi.unstubAllGlobals()
+    delete (HTMLImageElement.prototype as Partial<HTMLImageElement>).decode
   })
 
-  it('updates atlas coordinates in place instead of replacing an image element', async () => {
+  it('moves the rendered atlas in place for frames in the same animation', () => {
     const ref = createRef<DuelistSpriteHandle>()
     const { container, getByRole } = render(
       <DuelistSprite ref={ref} alt="Female duelist" duelist="female" initialAnimation="idle" initialFrame={1} />,
     )
 
-    act(() => ref.current?.setFrame('shoot', 999))
-
     const sprite = getByRole('img', { name: 'Female duelist' })
-    expect(container.querySelectorAll('img')).toHaveLength(1)
-    await waitFor(() => expect(sprite).toHaveAttribute('data-animation', 'shoot'))
-    expect(sprite).toHaveAttribute('data-animation', 'shoot')
-    expect(sprite).toHaveAttribute('data-frame', '1')
-    expect((sprite as HTMLDivElement).style.backgroundImage).toContain('female-shoot.png')
-    expect(ref.current?.getFrame()).toEqual({ animation: 'shoot', frame: 1 })
+    const atlasLayers = container.querySelectorAll<HTMLImageElement>('[data-duelist-atlas-layer]')
+    const activeAtlas = atlasLayers[0]
+
+    act(() => ref.current?.setFrame('idle', 2))
+
+    expect(atlasLayers).toHaveLength(2)
+    expect(activeAtlas.src).toContain('female-idle.png')
+    expect(activeAtlas.style.transform).toContain('-25%')
+    expect(sprite).toHaveAttribute('data-animation', 'idle')
+    expect(sprite).toHaveAttribute('data-frame', '2')
+    expect(ref.current?.getFrame()).toEqual({ animation: 'idle', frame: 2 })
   })
 
-  it('keeps the existing frame visible until a new atlas is loaded and decoded', async () => {
-    const image = installControlledImage()
+  it('keeps the rendered current atlas visible until the incoming layer itself loads and decodes', async () => {
+    const imageDecode = installControlledDecode()
     const ref = createRef<DuelistSpriteHandle>()
-    const { getByRole } = render(
+    const { container, getByRole } = render(
       <DuelistSprite ref={ref} alt="Female duelist" duelist="female" initialAnimation="idle" initialFrame={1} />,
     )
 
-    const sprite = getByRole('img', { name: 'Female duelist' }) as HTMLDivElement
+    const sprite = getByRole('img', { name: 'Female duelist' })
+    const [activeAtlas, stagingAtlas] = Array.from(
+      container.querySelectorAll<HTMLImageElement>('[data-duelist-atlas-layer]'),
+    )
+    const poster = container.querySelector<HTMLImageElement>('[data-duelist-poster]')!
+
     act(() => ref.current?.setFrame('twosteps', 1))
 
-    expect(sprite.style.backgroundImage).toContain('female-idle.png')
+    expect(activeAtlas.src).toContain('female-idle.png')
+    expect(activeAtlas.style.opacity).toBe('1')
+    expect(stagingAtlas.src).toContain('female-twosteps.png')
+    expect(stagingAtlas.style.opacity).toBe('0')
     expect(sprite).toHaveAttribute('data-animation', 'idle')
 
-    await act(async () => image.resolveDecode('/images/duelist/sprites/female-twosteps.png?v=2'))
+    fireEvent.load(stagingAtlas)
+    expect(activeAtlas.style.opacity).toBe('1')
+    expect(stagingAtlas.style.opacity).toBe('0')
 
-    expect(sprite.style.backgroundImage).toContain('female-idle.png')
-    expect(sprite).toHaveAttribute('data-animation', 'idle')
+    await act(async () => imageDecode.resolveDecode(stagingAtlas))
 
-    await act(async () => image.resolveLoad('/images/duelist/sprites/female-twosteps.png?v=2'))
-
-    expect(sprite.style.backgroundImage).toContain('female-twosteps.png')
+    expect(activeAtlas.style.opacity).toBe('0')
+    expect(stagingAtlas.style.opacity).toBe('1')
+    expect(poster.style.opacity).toBe('0')
     expect(sprite).toHaveAttribute('data-animation', 'twosteps')
+    expect(ref.current?.getFrame()).toEqual({ animation: 'twosteps', frame: 1 })
   })
 
-  it('keeps an initial-frame poster over the sprite until the idle atlas is loaded and decoded', async () => {
-    const image = installControlledImage()
-    const { getByRole, getByAltText } = render(
+  it('applies the latest requested frame when a pending atlas becomes ready', async () => {
+    const imageDecode = installControlledDecode()
+    const ref = createRef<DuelistSpriteHandle>()
+    const { container, getByRole } = render(
+      <DuelistSprite ref={ref} alt="Male duelist" duelist="male" initialAnimation="idle" initialFrame={1} />,
+    )
+    const [, stagingAtlas] = Array.from(
+      container.querySelectorAll<HTMLImageElement>('[data-duelist-atlas-layer]'),
+    )
+
+    act(() => {
+      ref.current?.setFrame('twosteps', 1)
+      ref.current?.setFrame('twosteps', 4)
+    })
+    fireEvent.load(stagingAtlas)
+    await act(async () => imageDecode.resolveDecode(stagingAtlas))
+
+    expect(getByRole('img', { name: 'Male duelist' })).toHaveAttribute('data-frame', '4')
+    expect(stagingAtlas.style.transform).toContain('-75%')
+    expect(ref.current?.getFrame()).toEqual({ animation: 'twosteps', frame: 4 })
+  })
+
+  it('retries a staging atlas after its previous load failed', async () => {
+    const ref = createRef<DuelistSpriteHandle>()
+    const { container } = render(
+      <DuelistSprite ref={ref} alt="Female duelist" duelist="female" initialAnimation="idle" initialFrame={1} />,
+    )
+    const [, stagingAtlas] = Array.from(
+      container.querySelectorAll<HTMLImageElement>('[data-duelist-atlas-layer]'),
+    )
+
+    act(() => ref.current?.setFrame('twosteps', 1))
+    fireEvent.error(stagingAtlas)
+    await act(async () => {})
+    Object.defineProperties(stagingAtlas, {
+      complete: { configurable: true, value: true },
+      naturalWidth: { configurable: true, value: 0 },
+    })
+    const removeAttribute = vi.spyOn(stagingAtlas, 'removeAttribute')
+
+    act(() => ref.current?.setFrame('twosteps', 1))
+
+    expect(removeAttribute).toHaveBeenCalledWith('src')
+    expect(stagingAtlas.src).toContain('female-twosteps.png')
+  })
+
+  it('keeps an initial-frame poster until the rendered idle atlas decodes', async () => {
+    const imageDecode = installControlledDecode()
+    const { container, getByRole } = render(
       <DuelistSprite alt="Male duelist" duelist="male" initialAnimation="idle" initialFrame={1} />,
     )
 
     const sprite = getByRole('img', { name: 'Male duelist' })
-    const poster = getByAltText('') as HTMLImageElement
+    const activeAtlas = container.querySelector<HTMLImageElement>('[data-duelist-atlas-layer="active"]')!
+    const poster = container.querySelector<HTMLImageElement>('[data-duelist-poster]')!
+    expect(activeAtlas.src).toContain('/images/duelist/sprites/male-idle.png')
     expect(poster.src).toContain('/images/duelist/male/idle/frame_001.png')
     expect(poster.style.opacity).toBe('1')
 
-    await act(async () => image.resolveDecode('/images/duelist/sprites/male-idle.png?v=2'))
-
+    fireEvent.load(activeAtlas)
     expect(poster.style.opacity).toBe('1')
 
-    await act(async () => image.resolveLoad('/images/duelist/sprites/male-idle.png?v=2'))
+    await act(async () => imageDecode.resolveDecode(activeAtlas))
 
     await waitFor(() => expect(poster.style.opacity).toBe('0'))
     expect(sprite).toHaveAttribute('data-animation', 'idle')

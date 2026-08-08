@@ -39,6 +39,13 @@ without parsing a PNG URL. Importantly, do not replace it with React state: the
 imperative handle keeps 8-FPS idle changes and scroll-frame changes off the
 page's React render path.
 
+`DuelistSprite` clips a rendered atlas `<img>` and moves it with transforms for
+same-animation frame changes. A second layer is used only during an animation
+handoff: the outgoing atlas stays visible until the incoming rendered image has
+loaded and decoded, then the layers swap atomically and the retired source is
+released. Keep this rendered-element handoff rather than using a detached image
+to infer when a CSS background is paint-ready.
+
 The generated atlas files are 2,054,086 bytes total, versus 3,334,537 bytes for
 the 80 individual source PNGs (about 38% less transfer before HTTP overhead).
 Their exact dimensions are: female idle 4096×1024; female twosteps and shoot

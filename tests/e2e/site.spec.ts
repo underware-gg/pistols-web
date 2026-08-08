@@ -25,7 +25,7 @@ test.describe('Pistols at Dawn routes', () => {
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
   })
 
-  test('keeps the duelist poster visible until its CSS atlas can paint', async ({ page }, testInfo) => {
+  test('keeps the duelist poster visible until its rendered atlas is ready', async ({ page }, testInfo) => {
     let resolveAtlasRequest: (() => void) | undefined
     const atlasRequestStarted = new Promise<void>((resolve) => {
       resolveAtlasRequest = resolve
@@ -47,13 +47,52 @@ test.describe('Pistols at Dawn routes', () => {
     await atlasRequestStarted
     await page.waitForTimeout(250)
 
-    const poster = page.locator('[role="img"][aria-label="Female duelist"] img[aria-hidden="true"]')
+    const duelist = page.locator('[role="img"][aria-label="Female duelist"]')
+    const poster = duelist.locator('[data-duelist-poster]')
+    const atlas = duelist.locator('[data-duelist-atlas-layer="active"]')
     await testInfo.attach('female-duelist-atlas-race', {
       body: await poster.screenshot(),
       contentType: 'image/png',
     })
     expect(await poster.evaluate((element) => getComputedStyle(element).opacity)).toBe('1')
     await expect(poster).toHaveCSS('opacity', '0', { timeout: 5_000 })
+    await expect(atlas).toHaveCSS('opacity', '1')
+  })
+
+  test('keeps the idle duelist visible while the walking atlas is still loading', async ({ page }) => {
+    let releaseWalkingAtlas: (() => void) | undefined
+    let resolveWalkingRequest: (() => void) | undefined
+    const walkingRequestStarted = new Promise<void>((resolve) => {
+      resolveWalkingRequest = resolve
+    })
+    const walkingAtlasReleased = new Promise<void>((resolve) => {
+      releaseWalkingAtlas = resolve
+    })
+
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.route('**/images/duelist/sprites/female-twosteps.png*', async (route) => {
+      resolveWalkingRequest?.()
+      await walkingAtlasReleased
+      await route.continue()
+    })
+    await page.goto('/')
+    await walkingRequestStarted
+
+    const duelist = page.locator('[role="img"][aria-label="Female duelist"]')
+    await expect(duelist.locator('[data-duelist-poster]')).toHaveCSS('opacity', '0')
+    await page.getByText('ENTER', { exact: true }).click()
+
+    const idleAtlas = duelist.locator('[data-duelist-atlas-layer="active"]')
+    const walkingAtlas = duelist.locator('img[src*="female-twosteps.png"]')
+    await expect(idleAtlas).toHaveAttribute('src', /female-idle\.png/)
+    await expect(idleAtlas).toHaveCSS('opacity', '1')
+    await expect(walkingAtlas).toHaveCSS('opacity', '0')
+    await expect(duelist).toHaveAttribute('data-animation', 'idle')
+
+    releaseWalkingAtlas?.()
+    await expect(duelist).toHaveAttribute('data-animation', 'twosteps')
+    await expect(walkingAtlas).toHaveAttribute('data-duelist-atlas-layer', 'active')
+    await expect(walkingAtlas).toHaveCSS('opacity', '1')
   })
 
   test('the World Beyond the Tavern cards retain visible image areas', async ({ page }) => {
