@@ -25,6 +25,37 @@ test.describe('Pistols at Dawn routes', () => {
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
   })
 
+  test('keeps the duelist poster visible until its CSS atlas can paint', async ({ page }, testInfo) => {
+    let resolveAtlasRequest: (() => void) | undefined
+    const atlasRequestStarted = new Promise<void>((resolve) => {
+      resolveAtlasRequest = resolve
+    })
+
+    await page.addInitScript(() => {
+      Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+        configurable: true,
+        value: () => Promise.resolve(),
+      })
+    })
+    await page.route('**/images/duelist/sprites/female-idle.png*', async (route) => {
+      resolveAtlasRequest?.()
+      await new Promise((resolve) => setTimeout(resolve, 1_000))
+      await route.continue()
+    })
+
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await atlasRequestStarted
+    await page.waitForTimeout(250)
+
+    const poster = page.locator('[role="img"][aria-label="Female duelist"] img[aria-hidden="true"]')
+    await testInfo.attach('female-duelist-atlas-race', {
+      body: await poster.screenshot(),
+      contentType: 'image/png',
+    })
+    expect(await poster.evaluate((element) => getComputedStyle(element).opacity)).toBe('1')
+    await expect(poster).toHaveCSS('opacity', '0', { timeout: 5_000 })
+  })
+
   test('the World Beyond the Tavern cards retain visible image areas', async ({ page }) => {
     await page.goto('/')
     const socials = page.locator('#Socials')

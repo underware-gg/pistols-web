@@ -8,7 +8,7 @@ type DuelistAnimation = "idle" | "twosteps" | "shoot";
 
 type Atlas = (typeof spriteMetadata.atlases)[number];
 
-const atlasDecodes = new Map<string, Promise<void>>();
+const atlasReadiness = new Map<string, Promise<boolean>>();
 
 export type DuelistSpriteProps = Omit<HTMLMotionProps<"div">, "children"> & {
   duelist: Duelist;
@@ -53,25 +53,34 @@ function getPosterSource(duelist: Duelist, animation: DuelistAnimation, frame: n
   return `/images/duelist/${duelist}/${animation}/frame_${String(frame).padStart(3, '0')}.png`;
 }
 
-function decodeAtlas(source: string) {
-  const existingDecode = atlasDecodes.get(source);
-  if (existingDecode) return existingDecode;
+function prepareAtlas(source: string) {
+  const existingReadiness = atlasReadiness.get(source);
+  if (existingReadiness) return existingReadiness;
 
   const image = new Image();
-  const decode = image.decode?.bind(image);
-  const atlasDecode = decode
-    ? (() => {
-        image.src = source;
-        return decode().catch(() => undefined);
-      })()
-    : new Promise<void>((resolve) => {
-        image.addEventListener('load', () => resolve(), { once: true });
-        image.addEventListener('error', () => resolve(), { once: true });
-        image.src = source;
-      });
+  const loaded = new Promise<boolean>((resolve) => {
+    image.addEventListener('load', () => resolve(true), { once: true });
+    image.addEventListener('error', () => resolve(false), { once: true });
+  });
 
-  atlasDecodes.set(source, atlasDecode);
-  return atlasDecode;
+  image.src = source;
+  const decoded = image.decode ? image.decode().then(() => true, () => false) : Promise.resolve(true);
+  const readiness = Promise.all([loaded, decoded]).then(([didLoad, didDecode]) => {
+    const isReady = didLoad && didDecode;
+    if (!isReady) atlasReadiness.delete(source);
+    return isReady;
+  });
+
+  atlasReadiness.set(source, readiness);
+  return readiness;
+}
+
+function waitForPaintBoundary() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
 }
 
 /**
@@ -82,7 +91,7 @@ export function preloadDuelistAnimations(animations: DuelistAnimation[]) {
   return Promise.all(
     spriteMetadata.atlases
       .filter((atlas) => animations.includes(atlas.animation as DuelistAnimation))
-      .map((atlas) => decodeAtlas(atlas.src)),
+      .map((atlas) => prepareAtlas(atlas.src)),
   );
 }
 
@@ -105,7 +114,9 @@ export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>
   useEffect(() => {
     let isMounted = true;
 
-    void decodeAtlas(initialSprite.atlas.src).then(() => {
+    void prepareAtlas(initialSprite.atlas.src).then(async (isReady) => {
+      if (!isReady || !isMounted) return;
+      await waitForPaintBoundary();
       if (isMounted) setIsInitialAtlasReady(true);
     });
 
@@ -137,7 +148,8 @@ export const DuelistSprite = forwardRef<DuelistSpriteHandle, DuelistSpriteProps>
         return;
       }
 
-      void decodeAtlas(sprite.atlas.src).then(() => {
+      void prepareAtlas(sprite.atlas.src).then((isReady) => {
+        if (!isReady) return;
         const requestedFrame = requestedFrameRef.current;
         if (requestedFrame.animation !== animation) return;
         applyFrame(requestedFrame.animation, requestedFrame.frame);
